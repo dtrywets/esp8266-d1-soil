@@ -31,6 +31,16 @@
     footer{text-align:center;color:var(--muted);font-size:.8rem;padding:1rem}
     esp-web-install-button,improv-wifi-serial-launch-button{display:block;margin-top:1rem}
     .btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.5rem 0}
+    th,td{padding:.45rem .55rem;border:1px solid var(--border);text-align:left;vertical-align:top}
+    th{background:var(--bg);font-weight:600;color:var(--text)}
+    .hw-grid{display:grid;gap:1rem}
+    @media(min-width:640px){.hw-grid{grid-template-columns:1fr 1fr}}
+    .hw-board{margin:0 0 .5rem;font-size:.92rem;font-weight:650;color:var(--text)}
+    .pin{font-family:ui-monospace,monospace;font-size:.82em}
+    pre.diagram{margin:.5rem 0 0;padding:.75rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:.78rem;line-height:1.45;overflow:auto;color:var(--muted)}
+    .estimate{font-size:.875rem;color:var(--muted)}
+    .estimate strong{color:var(--text)}
   </style>
 </head>
 <body>
@@ -69,6 +79,106 @@
       </improv-wifi-serial-launch-button>
       <div class="msg ok" style="margin-top:.85rem">
         MQTT und Kalibrierung weiterhin im Geräte-Dashboard — WLAN reicht hier für den Einstieg.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Verdrahtung (Capacitive Soil Moisture v1.2)</h2>
+      <p style="margin:0 0 .75rem;color:var(--muted);font-size:.875rem">
+        Sensor <strong>immer mit 3,3&nbsp;V</strong> betreiben — <strong>niemals 5&nbsp;V</strong> am Analog-Ausgang.
+        Nur die Sonde in die Erde stecken, Platine wetterfest oben halten.
+      </p>
+      <div class="hw-grid">
+        <div>
+          <p class="hw-board">ESP8266 — Wemos D1 Mini</p>
+          <table>
+            <thead><tr><th>Sensor</th><th>Board</th></tr></thead>
+            <tbody>
+              <tr><td>VCC</td><td><span class="pin">3V3</span></td></tr>
+              <tr><td>GND</td><td><span class="pin">G</span></td></tr>
+              <tr><td>AOUT</td><td><span class="pin">A0</span> (ADC)</td></tr>
+            </tbody>
+          </table>
+          <p class="estimate" style="margin:.55rem 0 0">
+            Optional Sensor-Strom schalten: <span class="pin">GPIO14</span> = <span class="pin">D5</span>
+            → N-Kanal-MOSFET/Transistor auf VCC-Leitung
+            (<code>SENSOR_POWER_ENABLED&nbsp;1</code> in <code>config.h</code>).
+            Direkt an 3,3&nbsp;V: <code>SENSOR_POWER_ENABLED&nbsp;0</code> (empfohlen bei stabiler Verkabelung).
+          </p>
+          <pre class="diagram">Capacitive Sensor v1.2          D1 Mini
+──────────────────────          ───────
+VCC ─────────────────────────── 3V3
+GND ─────────────────────────── G
+AOUT ────────────────────────── A0</pre>
+        </div>
+        <div>
+          <p class="hw-board">ESP32-C3 — DevKitM-1 (o.&nbsp;ä.)</p>
+          <table>
+            <thead><tr><th>Sensor</th><th>Board</th></tr></thead>
+            <tbody>
+              <tr><td>VCC</td><td><span class="pin">3V3</span></td></tr>
+              <tr><td>GND</td><td><span class="pin">GND</span></td></tr>
+              <tr><td>AOUT</td><td><span class="pin">GPIO4</span> (ADC, 0–4095)</td></tr>
+            </tbody>
+          </table>
+          <p class="estimate" style="margin:.55rem 0 0">
+            Standard-Firmware: Sensor dauerhaft an 3,3&nbsp;V
+            (<code>SENSOR_POWER_ENABLED&nbsp;0</code>).
+            Optional Stromschaltung: <span class="pin">GPIO5</span> (in <code>config.esp32c3.defaults.h</code> anpassbar).
+          </p>
+          <pre class="diagram">Capacitive Sensor v1.2          ESP32-C3 DevKit
+──────────────────────          ──────────────
+VCC ─────────────────────────── 3V3
+GND ─────────────────────────── GND
+AOUT ────────────────────────── GPIO4</pre>
+        </div>
+      </div>
+      <div class="msg warn" style="margin-top:.85rem">
+        USB nur fürs Flashen/Einrichten nötig. Im Beet: 3,3&nbsp;V-Versorgung stabil halten
+        (kurze Kabel, gute Lötstellen — Wackler am Kabel erzeugen falsche ADC-Werte).
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Solar &amp; Akku — grobe Einschätzung</h2>
+      <p class="estimate" style="margin:0 0 .65rem">
+        Die aktuelle Firmware hält <strong>WLAN dauerhaft aktiv</strong> (Web-Dashboard, MQTT, Messung alle
+        <strong>30&nbsp;s</strong>). Das ist kein Deep-Sleep-Design — eher „kleiner always-on IoT-Knoten“.
+      </p>
+      <table>
+        <thead><tr><th>Modus</th><th>Strom (Richtwert)</th><th>Energie / Tag @ 3,3&nbsp;V</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>WLAN verbunden, MQTT + Webserver</td>
+            <td>ESP8266 ca. <strong>70–120&nbsp;mA</strong><br>ESP32-C3 ca. <strong>50–90&nbsp;mA</strong></td>
+            <td>ca. <strong>5–9&nbsp;Wh</strong></td>
+          </tr>
+          <tr>
+            <td>Sensor (nur während Messung)</td>
+            <td>+5–15&nbsp;mA für ~0,3&nbsp;s</td>
+            <td>vernachlässigbar</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="estimate" style="margin:.75rem 0 .5rem">
+        <strong>Einzelner 18650 (~3000&nbsp;mAh, ~10&nbsp;Wh nutzbar):</strong> ohne Solar nur ca.
+        <strong>1–2 Tage</strong> — für Dauerbetrieb zu wenig.
+      </p>
+      <p class="estimate" style="margin:0 0 .5rem">
+        <strong>Mit Solar — machbar,</strong> wenn Panel und Akku die Nacht und bewölkte Tage überbrücken:
+      </p>
+      <ul class="estimate">
+        <li><strong>Solarmodul:</strong> 3–5&nbsp;W (6&nbsp;V-Kleinstmodul oder 5&nbsp;V), outdoor, möglichst volle Sonne</li>
+        <li><strong>Akku:</strong> 1× 18650 (min. 3000&nbsp;mAh) oder besser <strong>2× parallel</strong> / LiFePO4 3,2&nbsp;V 6&nbsp;Ah</li>
+        <li><strong>Ladung:</strong> TP4056-Modul (einfach) oder kleines Solar-Laderegler-Board mit USB/5&nbsp;V-Ausgang</li>
+        <li><strong>Spannung:</strong> Board braucht stabile <strong>3,3&nbsp;V</strong> — bei 1-Zellen-Lithium oft 3,3&nbsp;V-LDO oder C3 direkt von Li-Ion (Board hat oft eigenen Regler; Datenblatt prüfen)</li>
+        <li><strong>Reserve:</strong> Im Sommer reicht 3&nbsp;W oft; im Frühjahr/Herbst eher <strong>5&nbsp;W + größerer Akku</strong></li>
+      </ul>
+      <div class="msg ok">
+        Faustformel: Tagesbedarf ~<strong>7&nbsp;Wh</strong> → Panel sollte im Schnitt ~<strong>2–3&nbsp;W</strong>
+        in die Zelle liefern (5&nbsp;h Sonne ≈ 10–15&nbsp;Wh). Lieber etwas überdimensionieren.
+        Für echte Autarkie über Wochen mit wenig Sonne: Messintervall erhöhen, WLAN-Sleep oder Deep-Sleep
+        (Firmware-Anpassung) — spart ein Vielfaches.
       </div>
     </div>
 
