@@ -1,0 +1,4 @@
+.pio/
+include/config.h
+ota_upload.ini
+compile_commands.json

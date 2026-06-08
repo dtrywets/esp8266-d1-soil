@@ -1,0 +1,10 @@
+; Kopie nach ota_upload.ini — wird von Git ignoriert.
+; mDNS (.local) klappt auf manchen Linux-Systemen nicht; dann die IP nutzen.
+
+[env:d1_mini_ota]
+upload_port = 192.168.1.100
+
+; Optional, wenn OTA_PASSWORD in include/config.h gesetzt ist:
+; upload_flags =
+;   --auth=dein-ota-passwort
+;   --timeout=60
