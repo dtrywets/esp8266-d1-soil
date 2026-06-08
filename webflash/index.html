@@ -6,7 +6,6 @@
   <meta name="color-scheme" content="light dark">
   <title>Bodenfeuchte — Web Flash</title>
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
-  <script type="module" src="https://unpkg.com/improv-wifi-serial-sdk@2/dist/serial-launch-button.js"></script>
   <style>
     :root{color-scheme:light dark;--bg:#f6f4f0;--surface:#fff;--border:#ddd8cf;--text:#2c2a26;--muted:#6f6a62;--accent:#4a7352;--accent-text:#fff;--warn-bg:#f5efe3;--warn-text:#7a5a20;--ok-bg:#e8f0e8;--ok-text:#2f5236;--radius:10px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
     @media (prefers-color-scheme:dark){:root{--bg:#1c1b19;--surface:#2a2825;--border:#3d3a35;--text:#ece8e1;--muted:#a39e95;--accent:#6b9b74;--warn-bg:#3a3428;--warn-text:#e0c88a;--ok-bg:#243028;--ok-text:#a8d4ae}}
@@ -29,8 +28,7 @@
     .chip{padding:.25rem .65rem;border-radius:999px;border:1px solid var(--border);font-size:.78rem;color:var(--muted)}
     code{font-size:.85em}
     footer{text-align:center;color:var(--muted);font-size:.8rem;padding:1rem}
-    esp-web-install-button,improv-wifi-serial-launch-button{display:block;margin-top:1rem}
-    .btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    esp-web-install-button{display:block;margin-top:1rem}
     table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.5rem 0}
     th,td{padding:.45rem .55rem;border:1px solid var(--border);text-align:left;vertical-align:top}
     th{background:var(--bg);font-weight:600;color:var(--text)}
@@ -55,30 +53,21 @@
       <p style="margin:0;color:var(--muted);font-size:.875rem">
         Verbindet per <strong>Web Serial</strong> (Chrome/Edge), erkennt den Chip automatisch
         und wählt die passenden Firmware-Images aus dem Manifest.
-        <strong>Nach dem Flash</strong> erscheint direkt die WLAN-Einrichtung (Improv).
+        <strong>Nach dem Flash</strong> öffnet sich im selben Dialog die WLAN-Einrichtung
+        (Improv) — Netzwerk wählen, Passwort eingeben, fertig.
       </p>
       <div class="chips">
         <span class="chip">ESP8266 (D1 Mini)</span>
         <span class="chip">ESP32-C3</span>
-        <span class="chip">Improv Wi-Fi</span>
+        <span class="chip">WLAN im Flash-Dialog</span>
       </div>
       <esp-web-install-button manifest="manifest.json">
         <button slot="activate" class="btn">USB verbinden &amp; flashen</button>
       </esp-web-install-button>
-    </div>
-
-    <div class="card">
-      <h2>WLAN verbinden</h2>
-      <p style="margin:0;color:var(--muted);font-size:.875rem">
-        Nur WLAN einrichten — ohne erneutes Flashen. USB anschließen, Netzwerk wählen,
-        Zugangsdaten senden. Die Firmware speichert SSID/Passwort und startet neu.
-        Danach öffnet der Browser das Dashboard (<code>http://&lt;IP&gt;/</code>).
-      </p>
-      <improv-wifi-serial-launch-button>
-        <button slot="activate" class="btn btn-secondary">USB verbinden &amp; WLAN einrichten</button>
-      </improv-wifi-serial-launch-button>
       <div class="msg ok" style="margin-top:.85rem">
-        MQTT und Kalibrierung weiterhin im Geräte-Dashboard — WLAN reicht hier für den Einstieg.
+        Nach erfolgreichem Flash erscheint automatisch die WLAN-Auswahl im Installations-Dialog.
+        Das Gerät speichert die Zugangsdaten und startet neu — danach Dashboard unter
+        <code>http://&lt;IP&gt;/</code>. MQTT optional im Geräte-Dashboard.
       </div>
     </div>
 
@@ -192,7 +181,7 @@ AOUT ─────────────────────────
       </ul>
       <div class="msg warn">
         Beim ersten Flash wird der Flash-Speicher gelöscht (empfohlen).
-        WLAN direkt nach dem Flash oder über „WLAN einrichten“ setzen.
+        WLAN direkt im Flash-Dialog nach der Installation setzen.
         MQTT optional im Dashboard oder per <code>config.h</code> vor dem Build.
       </div>
     </div>
@@ -220,6 +209,6 @@ AOUT ─────────────────────────
       </p>
     </div>
   </main>
-  <footer>esp-web-tools · improv-wifi · esptool-js · Bodenfeuchte Soil Sensor</footer>
+  <footer>esp-web-tools · esptool-js · Bodenfeuchte Soil Sensor</footer>
 </body>
 </html>

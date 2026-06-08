@@ -1,4 +1,5 @@
 #include "event_log.h"
+#include "improv_wifi.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -9,7 +10,12 @@ static void logPrefix(const char *channel) {
   Serial.printf("[%lu.%03lu] [%s] ", sec, ms, channel);
 }
 
+static bool loggingSuppressed() { return improvWifiSerialQuiet(); }
+
 static void logV(const char *channel, const char *fmt, va_list args) {
+  if (loggingSuppressed()) {
+    return;
+  }
   char buffer[256];
   vsnprintf(buffer, sizeof(buffer), fmt, args);
   logPrefix(channel);
@@ -17,6 +23,9 @@ static void logV(const char *channel, const char *fmt, va_list args) {
 }
 
 void logWeb(const char *message) {
+  if (loggingSuppressed()) {
+    return;
+  }
   logPrefix("WEB");
   Serial.println(message);
 }
@@ -29,17 +38,26 @@ void logWebf(const char *fmt, ...) {
 }
 
 void logMqttIn(const char *topic, const char *payload) {
+  if (loggingSuppressed()) {
+    return;
+  }
   logPrefix("MQTT");
   Serial.printf("<- %s = %s\n", topic, payload ? payload : "");
 }
 
 void logMqttOut(const char *topic, const char *payload, bool retain) {
+  if (loggingSuppressed()) {
+    return;
+  }
   logPrefix("MQTT");
   Serial.printf("-> %s = %s%s\n", topic, payload ? payload : "",
                 retain ? " (retain)" : "");
 }
 
 void logMqtt(const char *message) {
+  if (loggingSuppressed()) {
+    return;
+  }
   logPrefix("MQTT");
   Serial.println(message);
 }
@@ -52,6 +70,9 @@ void logMqttf(const char *fmt, ...) {
 }
 
 void logSys(const char *message) {
+  if (loggingSuppressed()) {
+    return;
+  }
   logPrefix("SYS");
   Serial.println(message);
 }

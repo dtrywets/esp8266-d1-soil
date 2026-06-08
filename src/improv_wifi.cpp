@@ -17,8 +17,15 @@
 #define DEVICE_NAME "Bodenfeuchte 1"
 #endif
 
+#ifndef IMPROV_PROVISION_WINDOW_MS
+#define IMPROV_PROVISION_WINDOW_MS 120000
+#endif
+
 static ImprovWiFi improvSerial(&Serial);
 static bool improvStarted = false;
+static bool improvNeedProvision = false;
+static uint32_t improvBootMs = 0;
+static uint32_t lastAnnounceMs = 0;
 
 static ImprovTypes::ChipFamily improvChipFamily() {
 #if defined(ESP8266)
@@ -28,6 +35,17 @@ static ImprovTypes::ChipFamily improvChipFamily() {
 #else
   return ImprovTypes::ChipFamily::CF_ESP32;
 #endif
+}
+
+bool improvWifiShouldDeferNetwork() {
+  if (!improvNeedProvision) {
+    return false;
+  }
+  return (millis() - improvBootMs) < IMPROV_PROVISION_WINDOW_MS;
+}
+
+bool improvWifiSerialQuiet() {
+  return improvWifiShouldDeferNetwork();
 }
 
 static bool improvCustomConnect(const char *ssid, const char *password) {
@@ -53,6 +71,7 @@ static void improvOnConnected(const char *ssid, const char *password) {
   settings.wifiPassword = password;
   settings.wifiConfigured = true;
   networkConfigSave(settings);
+  improvNeedProvision = false;
   logSysf("Improv: WLAN \"%s\" gespeichert, Neustart …", ssid);
   (void)password;
   delay(400);
@@ -64,18 +83,37 @@ static void improvOnError(ImprovTypes::Error err) {
 }
 
 void improvWifiBegin() {
+  improvBootMs = millis();
+  improvNeedProvision = !networkConfigHasStoredWifi();
+
   improvSerial.setDeviceInfo(improvChipFamily(), "Bodenfeuchte Soil Sensor",
-                             FIRMWARE_VERSION_LABEL, DEVICE_NAME,
+                             FIRMWARE_VERSION, DEVICE_NAME,
                              "http://{LOCAL_IPV4}/");
   improvSerial.setCustomConnectWiFi(improvCustomConnect);
   improvSerial.onImprovConnected(improvOnConnected);
   improvSerial.onImprovError(improvOnError);
   improvStarted = true;
+
+  if (improvNeedProvision) {
+    improvSerial.announceAuthorized();
+    lastAnnounceMs = improvBootMs;
+  }
 }
 
 void improvWifiLoop() {
   if (!improvStarted) {
     return;
   }
+
   improvSerial.handleSerial();
+
+  if (!improvWifiShouldDeferNetwork()) {
+    return;
+  }
+
+  const uint32_t now = millis();
+  if (now - lastAnnounceMs >= 2000) {
+    improvSerial.announceAuthorized();
+    lastAnnounceMs = now;
+  }
 }

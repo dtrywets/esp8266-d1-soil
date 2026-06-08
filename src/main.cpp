@@ -293,14 +293,20 @@ static void mqttLoop() {
 
 void setup() {
   Serial.begin(115200);
-  delay(200);
-  Serial.println();
-  Serial.println("ESP8266 D1 Bodenfeuchte-Sensor startet");
-  logSysf("Firmware %s", FIRMWARE_VERSION_LABEL);
+  delay(100);
 
 #if defined(ESP8266)
   eepromStoreBegin();
 #endif
+
+  improvWifiBegin();
+
+  if (!improvWifiSerialQuiet()) {
+    Serial.println();
+    Serial.println("Bodenfeuchte-Sensor startet");
+    logSysf("Firmware %s", FIRMWARE_VERSION_LABEL);
+  }
+
   soilSensorBegin();
 
   NetworkSettings defaults;
@@ -311,7 +317,6 @@ void setup() {
   defaults.mqttUser = MQTT_USER;
   defaults.mqttPassword = MQTT_PASSWORD;
   webPortalBegin(defaults);
-  improvWifiBegin();
 }
 
 void loop() {

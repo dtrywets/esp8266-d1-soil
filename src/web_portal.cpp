@@ -2,6 +2,7 @@
 
 #include "dashboard_html.h"
 #include "event_log.h"
+#include "improv_wifi.h"
 #include "firmware_version.h"
 #include "network_config.h"
 #include "ota_update.h"
@@ -445,6 +446,10 @@ static void startWebServer() {
 }
 
 static void tryConnectWifi() {
+  if (improvWifiShouldDeferNetwork()) {
+    return;
+  }
+
   if (networkSettings.wifiSsid.isEmpty()) {
     startApMode();
     return;
@@ -504,7 +509,9 @@ void webPortalBegin(const NetworkSettings &defaults) {
   const bool hasCompileWifi = !isCompileDefaultSsid(defaults.wifiSsid);
 
   if (!hasStoredWifi && !hasCompileWifi) {
-    startApMode();
+    if (!improvWifiShouldDeferNetwork()) {
+      startApMode();
+    }
   } else if (!hasStoredWifi && hasCompileWifi) {
     networkSettings.wifiSsid = defaults.wifiSsid;
     networkSettings.wifiPassword = defaults.wifiPassword;
@@ -513,10 +520,34 @@ void webPortalBegin(const NetworkSettings &defaults) {
     tryConnectWifi();
   }
 
+  if (!improvWifiShouldDeferNetwork()) {
+    startWebServer();
+  }
+}
+
+static void webPortalEnsureStarted() {
+  if (improvWifiShouldDeferNetwork()) {
+    return;
+  }
+
+  const bool hasStoredWifi = networkConfigHasStoredWifi();
+  const bool hasCompileWifi = !isCompileDefaultSsid(compileDefaults.wifiSsid);
+
+  if (!hasStoredWifi && !hasCompileWifi && !apMode &&
+      networkSettings.wifiSsid.isEmpty()) {
+    startApMode();
+  }
+
   startWebServer();
 }
 
 void webPortalLoop() {
+  webPortalEnsureStarted();
+
+  if (improvWifiShouldDeferNetwork()) {
+    return;
+  }
+
   if (apMode) {
     dnsServer.processNextRequest();
   }

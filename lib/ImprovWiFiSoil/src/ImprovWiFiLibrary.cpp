@@ -146,6 +146,11 @@ bool ImprovWiFi::isConnected()
   return (WiFi.status() == WL_CONNECTED);
 }
 
+void ImprovWiFi::announceAuthorized()
+{
+  setState(ImprovTypes::STATE_AUTHORIZED);
+}
+
 void ImprovWiFi::sendDeviceUrl(ImprovTypes::Command cmd)
 {
   // URL where user can finish onboarding or use device

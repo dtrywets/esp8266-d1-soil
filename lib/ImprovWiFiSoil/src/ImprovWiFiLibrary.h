@@ -162,6 +162,9 @@ public:
    */
   bool isConnected();
 
+  /** Sendet Improv-Status „bereit“ — für ESP Web Tools nach dem Flash. */
+  void announceAuthorized();
+
 private:
   OnImprovError *onImproErrorCallback;
   OnImprovConnected *onImprovConnectedCallback;
