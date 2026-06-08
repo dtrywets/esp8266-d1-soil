@@ -1,3 +1,9 @@
+#if defined(ESP8266)
+#include <Arduino.h>
+#include <Esp.h>
+ADC_MODE(ADC_TOUT_3V3);
+#endif
+
 #include "project_config.h"
 #include "soil_sensor.h"
 
@@ -6,8 +12,6 @@
 #include <cstring>
 
 #if defined(ESP8266)
-#include <Esp.h>
-ADC_MODE(ADC_TOUT_3V3);
 #include "eeprom_store.h"
 #include <EEPROM.h>
 #else
