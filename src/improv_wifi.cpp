@@ -23,9 +23,10 @@
 
 static ImprovWiFi improvSerial(&Serial);
 static bool improvStarted = false;
-static bool improvNeedProvision = false;
 static uint32_t improvBootMs = 0;
 static uint32_t lastAnnounceMs = 0;
+
+static bool needsWifiSetup() { return !networkConfigHasStoredWifi(); }
 
 static ImprovTypes::ChipFamily improvChipFamily() {
 #if defined(ESP8266)
@@ -38,14 +39,14 @@ static ImprovTypes::ChipFamily improvChipFamily() {
 }
 
 bool improvWifiShouldDeferNetwork() {
-  if (!improvNeedProvision) {
+  if (!needsWifiSetup()) {
     return false;
   }
   return (millis() - improvBootMs) < IMPROV_PROVISION_WINDOW_MS;
 }
 
 bool improvWifiSerialQuiet() {
-  return improvWifiShouldDeferNetwork();
+  return needsWifiSetup();
 }
 
 static bool improvCustomConnect(const char *ssid, const char *password) {
@@ -71,7 +72,6 @@ static void improvOnConnected(const char *ssid, const char *password) {
   settings.wifiPassword = password;
   settings.wifiConfigured = true;
   networkConfigSave(settings);
-  improvNeedProvision = false;
   logSysf("Improv: WLAN \"%s\" gespeichert, Neustart …", ssid);
   (void)password;
   delay(400);
@@ -84,7 +84,6 @@ static void improvOnError(ImprovTypes::Error err) {
 
 void improvWifiBegin() {
   improvBootMs = millis();
-  improvNeedProvision = !networkConfigHasStoredWifi();
 
   improvSerial.setDeviceInfo(improvChipFamily(), "Bodenfeuchte Soil Sensor",
                              FIRMWARE_VERSION, DEVICE_NAME,
@@ -94,7 +93,7 @@ void improvWifiBegin() {
   improvSerial.onImprovError(improvOnError);
   improvStarted = true;
 
-  if (improvNeedProvision) {
+  if (needsWifiSetup()) {
     improvSerial.announceAuthorized();
     lastAnnounceMs = improvBootMs;
   }
@@ -107,7 +106,7 @@ void improvWifiLoop() {
 
   improvSerial.handleSerial();
 
-  if (!improvWifiShouldDeferNetwork()) {
+  if (!needsWifiSetup()) {
     return;
   }
 

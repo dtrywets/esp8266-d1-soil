@@ -6,6 +6,7 @@
   "builds": [
     {
       "chipFamily": "ESP8266",
+      "improv": true,
       "parts": [
         {
           "path": "firmware/esp8266.bin",
@@ -15,6 +16,7 @@
     },
     {
       "chipFamily": "ESP32-C3",
+      "improv": true,
       "parts": [
         {
           "path": "firmware/esp32c3/bootloader.bin",

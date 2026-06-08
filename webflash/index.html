@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Bodenfeuchte — Web Flash</title>
-  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
   <style>
     :root{color-scheme:light dark;--bg:#f6f4f0;--surface:#fff;--border:#ddd8cf;--text:#2c2a26;--muted:#6f6a62;--accent:#4a7352;--accent-text:#fff;--warn-bg:#f5efe3;--warn-text:#7a5a20;--ok-bg:#e8f0e8;--ok-text:#2f5236;--radius:10px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
     @media (prefers-color-scheme:dark){:root{--bg:#1c1b19;--surface:#2a2825;--border:#3d3a35;--text:#ece8e1;--muted:#a39e95;--accent:#6b9b74;--warn-bg:#3a3428;--warn-text:#e0c88a;--ok-bg:#243028;--ok-text:#a8d4ae}}
@@ -49,25 +48,25 @@
   </header>
   <main>
     <div class="card">
-      <h2>Firmware installieren</h2>
+      <h2>Einrichten</h2>
       <p style="margin:0;color:var(--muted);font-size:.875rem">
-        Verbindet per <strong>Web Serial</strong> (Chrome/Edge), erkennt den Chip automatisch
-        und wählt die passenden Firmware-Images aus dem Manifest.
-        <strong>Nach dem Flash</strong> öffnet sich im selben Dialog die WLAN-Einrichtung
-        (Improv) — Netzwerk wählen, Passwort eingeben, fertig.
+        Verbindet per <strong>Web Serial</strong> (Chrome/Edge). Bereits geflashte Geräte werden
+        erkannt — dann <strong>ohne erneutes Flashen</strong> direkt zur WLAN-Einrichtung.
+        Neue oder fremde Firmware wird automatisch installiert, danach ebenfalls WLAN im selben Dialog.
       </p>
       <div class="chips">
         <span class="chip">ESP8266 (D1 Mini)</span>
         <span class="chip">ESP32-C3</span>
-        <span class="chip">WLAN im Flash-Dialog</span>
+        <span class="chip">Firmware-Erkennung</span>
+        <span class="chip">WLAN im Dialog</span>
       </div>
       <esp-web-install-button manifest="manifest.json">
-        <button slot="activate" class="btn">USB verbinden &amp; flashen</button>
+        <button slot="activate" class="btn">USB verbinden</button>
       </esp-web-install-button>
       <div class="msg ok" style="margin-top:.85rem">
-        Nach erfolgreichem Flash erscheint automatisch die WLAN-Auswahl im Installations-Dialog.
-        Das Gerät speichert die Zugangsdaten und startet neu — danach Dashboard unter
-        <code>http://&lt;IP&gt;/</code>. MQTT optional im Geräte-Dashboard.
+        Bereits installiert? USB verbinden → Firmware wird erkannt → WLAN-Auswahl erscheint sofort.
+        Nach der Einrichtung speichert das Gerät SSID/Passwort und startet neu — Dashboard unter
+        <code>http://&lt;IP&gt;/</code>.
       </div>
     </div>
 
@@ -210,5 +209,21 @@ AOUT ─────────────────────────
     </div>
   </main>
   <footer>esp-web-tools · esptool-js · Bodenfeuchte Soil Sensor</footer>
+  <script type="module">
+    import 'https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module';
+
+    const FIRMWARE_NAME = 'Bodenfeuchte Soil Sensor';
+
+    customElements.whenDefined('esp-web-install-button').then(() => {
+      const button = document.querySelector('esp-web-install-button');
+      button.overrides = {
+        checkSameFirmware(manifest, improvInfo) {
+          const expected = (manifest.name || FIRMWARE_NAME).toLowerCase().trim();
+          const actual = (improvInfo.firmware || improvInfo.name || '').toLowerCase().trim();
+          return expected === actual;
+        },
+      };
+    });
+  </script>
 </body>
 </html>
