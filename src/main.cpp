@@ -1,19 +1,20 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#include "project_config.h"
+#include "platform_io.h"
+
+#if defined(ESP8266)
 #include "eeprom_store.h"
+#endif
 #include "event_log.h"
 #include "firmware_version.h"
 #include "network_config.h"
+#include "improv_wifi.h"
 #include "ota_update.h"
 #include "soil_sensor.h"
 #include "web_portal.h"
-
-#if __has_include("config.h")
-#include "config.h"
-#endif
 
 #ifndef WIFI_SSID
 #define WIFI_SSID "your-wifi"
@@ -149,7 +150,7 @@ static void publishHomeAssistantDiscovery() {
     doc["command_topic"] = base + "/" + entity.topicKey + "/set";
     doc["state_topic"] = base + "/" + entity.topicKey;
     doc["min"] = 0;
-    doc["max"] = 1023;
+    doc["max"] = ADC_MAX_VALUE;
     doc["step"] = 1;
     doc["mode"] = "box";
     doc["availability_topic"] = statusTopic;
@@ -297,7 +298,9 @@ void setup() {
   Serial.println("ESP8266 D1 Bodenfeuchte-Sensor startet");
   logSysf("Firmware %s", FIRMWARE_VERSION_LABEL);
 
+#if defined(ESP8266)
   eepromStoreBegin();
+#endif
   soilSensorBegin();
 
   NetworkSettings defaults;
@@ -308,9 +311,11 @@ void setup() {
   defaults.mqttUser = MQTT_USER;
   defaults.mqttPassword = MQTT_PASSWORD;
   webPortalBegin(defaults);
+  improvWifiBegin();
 }
 
 void loop() {
+  improvWifiLoop();
   webPortalLoop();
   otaUpdateLoop();
   soilSensorTask();

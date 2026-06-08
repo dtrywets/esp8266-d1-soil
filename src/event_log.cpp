@@ -4,8 +4,9 @@
 #include <cstdio>
 
 static void logPrefix(const char *channel) {
-  const uint32_t sec = millis() / 1000UL;
-  Serial.printf("[%lu.%03lu] [%s] ", sec, millis() % 1000UL, channel);
+  const unsigned long sec = millis() / 1000UL;
+  const unsigned long ms = millis() % 1000UL;
+  Serial.printf("[%lu.%03lu] [%s] ", sec, ms, channel);
 }
 
 static void logV(const char *channel, const char *fmt, va_list args) {

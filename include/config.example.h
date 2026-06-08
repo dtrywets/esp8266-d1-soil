@@ -29,3 +29,7 @@
 #define DEFAULT_WET_ADC 300
 
 #define DEFAULT_SENSOR_LABEL "Bodenfeuchte"
+
+#ifndef AP_SSID_PREFIX
+#define AP_SSID_PREFIX "D1Soil-"
+#endif

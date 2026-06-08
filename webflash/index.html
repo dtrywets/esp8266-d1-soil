@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Bodenfeuchte — Web Flash</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <script type="module" src="https://unpkg.com/improv-wifi-serial-sdk@2/dist/serial-launch-button.js"></script>
+  <style>
+    :root{color-scheme:light dark;--bg:#f6f4f0;--surface:#fff;--border:#ddd8cf;--text:#2c2a26;--muted:#6f6a62;--accent:#4a7352;--accent-text:#fff;--warn-bg:#f5efe3;--warn-text:#7a5a20;--ok-bg:#e8f0e8;--ok-text:#2f5236;--radius:10px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+    @media (prefers-color-scheme:dark){:root{--bg:#1c1b19;--surface:#2a2825;--border:#3d3a35;--text:#ece8e1;--muted:#a39e95;--accent:#6b9b74;--warn-bg:#3a3428;--warn-text:#e0c88a;--ok-bg:#243028;--ok-text:#a8d4ae}}
+    *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5}
+    header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface)}
+    header h1{margin:0;font-size:1.4rem;font-weight:650}
+    header p{margin:.35rem 0 0;color:var(--muted);font-size:.9rem}
+    header a{color:var(--accent)}
+    main{max-width:720px;margin:0 auto;padding:1.25rem 1.5rem 2.5rem}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1rem}
+    .card h2{margin:0 0 .65rem;font-size:1rem}
+    .msg{padding:.75rem;border-radius:8px;font-size:.875rem;margin:.75rem 0}
+    .msg.warn{background:var(--warn-bg);color:var(--warn-text)}
+    .msg.ok{background:var(--ok-bg);color:var(--ok-text)}
+    ul{margin:.5rem 0 0;padding-left:1.2rem;font-size:.875rem;color:var(--muted)}
+    li{margin:.25rem 0}
+    .btn{display:inline-block;padding:.55rem 1.1rem;border:none;border-radius:8px;background:var(--accent);color:var(--accent-text);font-weight:600;font-size:.9rem;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .chips{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+    .chip{padding:.25rem .65rem;border-radius:999px;border:1px solid var(--border);font-size:.78rem;color:var(--muted)}
+    code{font-size:.85em}
+    footer{text-align:center;color:var(--muted);font-size:.8rem;padding:1rem}
+    esp-web-install-button,improv-wifi-serial-launch-button{display:block;margin-top:1rem}
+    .btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bodenfeuchte — Web Flash</h1>
+    <p>Firmware per USB flashen · ESP8266 D1 Mini oder ESP32-C3 (Auto-Erkennung) ·
+      <a href="https://github.com/dtrywets/esp8266-d1-soil">GitHub</a></p>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Firmware installieren</h2>
+      <p style="margin:0;color:var(--muted);font-size:.875rem">
+        Verbindet per <strong>Web Serial</strong> (Chrome/Edge), erkennt den Chip automatisch
+        und wählt die passenden Firmware-Images aus dem Manifest.
+        <strong>Nach dem Flash</strong> erscheint direkt die WLAN-Einrichtung (Improv).
+      </p>
+      <div class="chips">
+        <span class="chip">ESP8266 (D1 Mini)</span>
+        <span class="chip">ESP32-C3</span>
+        <span class="chip">Improv Wi-Fi</span>
+      </div>
+      <esp-web-install-button manifest="manifest.json">
+        <button slot="activate" class="btn">USB verbinden &amp; flashen</button>
+      </esp-web-install-button>
+    </div>
+
+    <div class="card">
+      <h2>WLAN verbinden</h2>
+      <p style="margin:0;color:var(--muted);font-size:.875rem">
+        Nur WLAN einrichten — ohne erneutes Flashen. USB anschließen, Netzwerk wählen,
+        Zugangsdaten senden. Die Firmware speichert SSID/Passwort und startet neu.
+        Danach öffnet der Browser das Dashboard (<code>http://&lt;IP&gt;/</code>).
+      </p>
+      <improv-wifi-serial-launch-button>
+        <button slot="activate" class="btn btn-secondary">USB verbinden &amp; WLAN einrichten</button>
+      </improv-wifi-serial-launch-button>
+      <div class="msg ok" style="margin-top:.85rem">
+        MQTT und Kalibrierung weiterhin im Geräte-Dashboard — WLAN reicht hier für den Einstieg.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Voraussetzungen</h2>
+      <ul>
+        <li>Browser: <strong>Google Chrome</strong> oder <strong>Microsoft Edge</strong> (Web Serial)</li>
+        <li>USB-Datenkabel zum Board (nicht nur Ladekabel)</li>
+        <li>Sensor-Versorgung: <strong>3,3 V</strong> — nie 5 V am ADC</li>
+        <li>Bei Problemen: Boot-Taste gedrückt halten, dann „Flashen“ starten</li>
+      </ul>
+      <div class="msg warn">
+        Beim ersten Flash wird der Flash-Speicher gelöscht (empfohlen).
+        WLAN direkt nach dem Flash oder über „WLAN einrichten“ setzen.
+        MQTT optional im Dashboard oder per <code>config.h</code> vor dem Build.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Alternativen</h2>
+      <ul>
+        <li>PlatformIO USB: <code>pio run -e d1_mini -t upload</code> / <code>pio run -e esp32c3 -t upload</code></li>
+        <li>OTA (nur wenn Firmware läuft): <code>pio run -e d1_mini_ota -t upload</code></li>
+        <li>Laufendes Gerät: Dashboard Tab „Firmware“ (HTTP-Upload)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Hosting</h2>
+      <p style="margin:0;color:var(--muted);font-size:.875rem">
+        Diese Seite wird aus dem GitHub-Repository per <strong>GitHub Pages</strong> veröffentlicht
+        (<a href="https://dtrywets.github.io/esp8266-d1-soil/">dtrywets.github.io/esp8266-d1-soil</a>).
+        Bei jedem Push auf <code>main</code> baut die Action die Firmware und aktualisiert die
+        <code>.bin</code>-Dateien automatisch.
+      </p>
+      <p style="margin:.65rem 0 0;color:var(--muted);font-size:.875rem">
+        Lokal testen: <code>./scripts/build-webflash.sh</code> und
+        <code>cd webflash && python -m http.server 8765</code>
+      </p>
+    </div>
+  </main>
+  <footer>esp-web-tools · improv-wifi · esptool-js · Bodenfeuchte Soil Sensor</footer>
+</body>
+</html>

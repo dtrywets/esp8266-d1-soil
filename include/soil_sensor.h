@@ -2,13 +2,7 @@
 
 #include <Arduino.h>
 
-#ifndef DEFAULT_DRY_ADC
-#define DEFAULT_DRY_ADC 800
-#endif
-
-#ifndef DEFAULT_WET_ADC
-#define DEFAULT_WET_ADC 300
-#endif
+#include "adc_config.h"
 
 #ifndef DEFAULT_SENSOR_LABEL
 #define DEFAULT_SENSOR_LABEL "Bodenfeuchte"

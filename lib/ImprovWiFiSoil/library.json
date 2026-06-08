@@ -1,0 +1,7 @@
+{
+  "name": "ImprovWiFiSoil",
+  "version": "0.0.4-soil",
+  "description": "Improv Wi-Fi Serial (ESP8266/ESP32, FreeRTOS-Fix)",
+  "frameworks": "arduino",
+  "platforms": ["espressif8266", "espressif32"]
+}

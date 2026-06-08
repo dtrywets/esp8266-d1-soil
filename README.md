@@ -1,6 +1,28 @@
-# ESP8266 D1 Mini Bodenfeuchte-Sensor
+# Bodenfeuchte Soil Sensor (ESP8266 / ESP32-C3)
 
-Firmware für **Wemos D1 Mini (ESP8266)** mit **Capacitive Soil Moisture Sensor v1.2**: MQTT-Sensor mit Home-Assistant-Discovery, Web-Dashboard (Status + Kalibrierung) und OTA-Updates.
+Firmware für **Wemos D1 Mini (ESP8266)** oder **ESP32-C3** mit **Capacitive Soil Moisture Sensor v1.2**: MQTT-Sensor mit Home-Assistant-Discovery, Web-Dashboard (Status + Kalibrierung) und OTA-Updates.
+
+## Web Flash (Browser, USB)
+
+Im Ordner `webflash/` liegt ein Portal auf Basis von [ESP Web Tools](https://esphome.github.io/esp-web-tools/) — Chip-Erkennung **ESP8266** oder **ESP32-C3**, passende Firmware automatisch. **WLAN** lässt sich direkt im Browser einrichten ([Improv Wi-Fi](https://www.improv-wifi.com/serial/)): nach dem Flash oder separat über „WLAN einrichten“.
+
+**Online (GitHub Pages):** [dtrywets.github.io/esp8266-d1-soil](https://dtrywets.github.io/esp8266-d1-soil/) — wird bei jedem Push auf `main` per GitHub Actions gebaut und veröffentlicht (Firmware-Bins inklusive).
+
+**Lokal:**
+
+```bash
+./scripts/build-webflash.sh          # .bin-Dateien bauen & Manifest aktualisieren
+cd webflash && python -m http.server 8765
+# http://localhost:8765 — Chrome/Edge, USB-Kabel
+```
+
+### GitHub Pages einmalig aktivieren
+
+1. Repository auf GitHub öffnen → **Settings** → **Pages**
+2. **Build and deployment** → **Source:** `GitHub Actions`
+3. Nach dem nächsten Push auf `main` (oder manuell: Actions → „GitHub Pages (Web Flash)“ → **Run workflow**) ist die Seite erreichbar.
+
+Voraussetzung im Browser: **Chrome** oder **Edge** (Web Serial API). Nach erfolgreicher WLAN-Einrichtung öffnet der Browser das Geräte-Dashboard; MQTT bleibt optional im Dashboard konfigurierbar.
 
 ## Hardware
 
@@ -48,10 +70,19 @@ Alternativ: `.bin` über das Web-Dashboard (Tab „Firmware“) hochladen.
 ## Build
 
 ```bash
-pio run -e d1_mini          # Kompilieren
-pio run -t upload           # USB-Flash
+pio run -e d1_mini          # ESP8266 D1 Mini
+pio run -e esp32c3          # ESP32-C3 (GPIO4 = ADC)
+pio run -t upload           # USB-Flash (default_env)
 pio device monitor          # Serial-Log (115200)
+./scripts/build-webflash.sh # Firmware für webflash/
 ```
+
+### ESP32-C3
+
+- Board-Defaults: `include/config.esp32c3.defaults.h` (aktiv mit `-DCONFIG_BOARD_ESP32C3`)
+- Optional: `include/config.esp32c3.h.example` → `config.esp32c3.h`
+- ADC: 12 Bit (0–4095), Standard-Kalibrierung trocken/nass: 3200 / 1200
+- AP-Name: `C3Soil-XXXX`
 
 ## Kalibrierung
 

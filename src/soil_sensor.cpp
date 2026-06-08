@@ -1,17 +1,25 @@
+#include "project_config.h"
 #include "soil_sensor.h"
 
-#include "eeprom_store.h"
 #include "event_log.h"
 
-#include <EEPROM.h>
 #include <cstring>
 
-#if __has_include("config.h")
-#include "config.h"
+#if defined(ESP8266)
+#include <Esp.h>
+ADC_MODE(ADC_TOUT_3V3);
+#include "eeprom_store.h"
+#include <EEPROM.h>
+#else
+#include <Preferences.h>
 #endif
 
 #ifndef SENSOR_ADC_PIN
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#define SENSOR_ADC_PIN 4
+#else
 #define SENSOR_ADC_PIN A0
+#endif
 #endif
 
 #ifndef SENSOR_POWER_PIN
@@ -30,6 +38,7 @@
 #define MEASURE_INTERVAL_MS 30000
 #endif
 
+#if defined(ESP8266)
 static constexpr uint32_t kCalMagic = 0xD150CA11UL;
 static constexpr uint16_t kCalOffset = 256;
 
@@ -39,6 +48,10 @@ struct CalStored {
   uint16_t wetAdc = DEFAULT_WET_ADC;
   char label[49] = DEFAULT_SENSOR_LABEL;
 };
+#else
+static Preferences calPreferences;
+static const char *kCalNamespace = "d1_soil_cal";
+#endif
 
 static SoilCalibration calibration;
 static SoilReading lastReading;
@@ -114,20 +127,11 @@ static void finishMeasurement(uint16_t rawAdc) {
   logSysf("Bodenfeuchte: ADC=%u, %.1f %%", rawAdc, lastReading.moisturePercent);
 }
 
-static void loadStored(CalStored &stored) {
+void soilCalLoad(SoilCalibration &cal, const SoilCalibration &defaults) {
+#if defined(ESP8266)
+  CalStored stored;
   eepromStoreBegin();
   EEPROM.get(kCalOffset, stored);
-}
-
-static void saveStored(const CalStored &stored) {
-  eepromStoreBegin();
-  EEPROM.put(kCalOffset, stored);
-  EEPROM.commit();
-}
-
-void soilCalLoad(SoilCalibration &cal, const SoilCalibration &defaults) {
-  CalStored stored;
-  loadStored(stored);
 
   if (stored.magic != kCalMagic) {
     cal = defaults;
@@ -137,6 +141,19 @@ void soilCalLoad(SoilCalibration &cal, const SoilCalibration &defaults) {
   cal.dryAdc = stored.dryAdc;
   cal.wetAdc = stored.wetAdc;
   cal.label = stored.label;
+#else
+  if (!calPreferences.begin(kCalNamespace, true)) {
+    calPreferences.end();
+    calPreferences.begin(kCalNamespace, false);
+  }
+
+  cal.dryAdc =
+      static_cast<uint16_t>(calPreferences.getUShort("dry_adc", defaults.dryAdc));
+  cal.wetAdc =
+      static_cast<uint16_t>(calPreferences.getUShort("wet_adc", defaults.wetAdc));
+  cal.label = calPreferences.getString("label", defaults.label);
+  calPreferences.end();
+#endif
 
   if (cal.dryAdc <= cal.wetAdc) {
     cal = defaults;
@@ -144,12 +161,36 @@ void soilCalLoad(SoilCalibration &cal, const SoilCalibration &defaults) {
 }
 
 void soilCalSave(const SoilCalibration &cal) {
+#if defined(ESP8266)
   CalStored stored;
   stored.magic = kCalMagic;
   stored.dryAdc = cal.dryAdc;
   stored.wetAdc = cal.wetAdc;
   strncpy(stored.label, cal.label.c_str(), sizeof(stored.label) - 1);
-  saveStored(stored);
+  eepromStoreBegin();
+  EEPROM.put(kCalOffset, stored);
+  EEPROM.commit();
+#else
+  calPreferences.begin(kCalNamespace, false);
+  calPreferences.putUShort("dry_adc", cal.dryAdc);
+  calPreferences.putUShort("wet_adc", cal.wetAdc);
+  calPreferences.putString("label", cal.label);
+  calPreferences.end();
+#endif
+}
+
+static uint16_t readAdcMedian() {
+  for (uint8_t i = 0; i < 2; ++i) {
+    analogRead(SENSOR_ADC_PIN);
+    delay(5);
+  }
+
+  uint16_t localSamples[5];
+  for (uint8_t i = 0; i < 5; ++i) {
+    localSamples[i] = static_cast<uint16_t>(analogRead(SENSOR_ADC_PIN));
+    delay(10);
+  }
+  return median5(localSamples);
 }
 
 void soilSensorBegin() {
@@ -158,6 +199,8 @@ void soilSensorBegin() {
     pinMode(SENSOR_POWER_PIN, OUTPUT);
     digitalWrite(SENSOR_POWER_PIN, LOW);
   }
+#elif SENSOR_POWER_PIN >= 0
+  pinMode(SENSOR_POWER_PIN, INPUT);
 #endif
 
   SoilCalibration defaults;
@@ -169,15 +212,9 @@ void soilSensorBegin() {
 SoilReading soilSensorMeasure() {
   sensorPowerOn();
   delay(MEASURE_WARMUP_MS);
-
-  uint16_t localSamples[5];
-  for (uint8_t i = 0; i < 5; ++i) {
-    localSamples[i] = static_cast<uint16_t>(analogRead(SENSOR_ADC_PIN));
-    delay(10);
-  }
-
+  const uint16_t raw = readAdcMedian();
   sensorPowerOff();
-  finishMeasurement(median5(localSamples));
+  finishMeasurement(raw);
   return lastReading;
 }
 
@@ -204,15 +241,25 @@ void soilSensorTask() {
     return;
   }
 
-  if (sampleIndex < 5) {
-    samples[sampleIndex] = static_cast<uint16_t>(analogRead(SENSOR_ADC_PIN));
-    ++sampleIndex;
+  if (sampleIndex == 0) {
+    for (uint8_t i = 0; i < 2; ++i) {
+      analogRead(SENSOR_ADC_PIN);
+    }
     measureStateMs = now;
+    ++sampleIndex;
     return;
   }
 
-  if (now - measureStateMs < 10) {
-    return;
+  if (sampleIndex <= 5) {
+    if (now - measureStateMs < 10) {
+      return;
+    }
+    samples[sampleIndex - 1] = static_cast<uint16_t>(analogRead(SENSOR_ADC_PIN));
+    ++sampleIndex;
+    measureStateMs = now;
+    if (sampleIndex <= 5) {
+      return;
+    }
   }
 
   sensorPowerOff();

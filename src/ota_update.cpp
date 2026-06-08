@@ -1,10 +1,9 @@
 #include "ota_update.h"
 
 #include "event_log.h"
+#include "platform_io.h"
 
 #include <ArduinoOTA.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
 
 #ifndef WIFI_HOSTNAME
 #define WIFI_HOSTNAME "D1Soil1"
@@ -14,8 +13,14 @@
 #define OTA_PASSWORD ""
 #endif
 
+#if defined(ESP8266)
 #ifndef ARDUINO_OTA_PORT
 #define ARDUINO_OTA_PORT 8266
+#endif
+#else
+#ifndef ARDUINO_OTA_PORT
+#define ARDUINO_OTA_PORT 3232
+#endif
 #endif
 
 static bool otaUdpStarted = false;
@@ -38,24 +43,33 @@ void otaUpdateOnWifiConnected() {
     return;
   }
 
+#if defined(ESP8266)
   ArduinoOTA.setPort(ARDUINO_OTA_PORT);
+#else
+  ArduinoOTA.setMdnsEnabled(false);
+  ArduinoOTA.setPort(ARDUINO_OTA_PORT);
+#endif
   ArduinoOTA.setHostname(WIFI_HOSTNAME);
   configureArduinoOtaCallbacks();
 
   if (otaPasswordEnabled()) {
     ArduinoOTA.setPassword(OTA_PASSWORD);
-    logSysf("Arduino-OTA: UDP-Port %u (mit Passwort)",
+    logSysf("Arduino-OTA: Port %u (mit Passwort)",
             static_cast<unsigned>(ARDUINO_OTA_PORT));
   } else {
-    logSysf("Arduino-OTA: UDP-Port %u (ohne Passwort — nur im LAN)",
+    logSysf("Arduino-OTA: Port %u (ohne Passwort — nur im LAN)",
             static_cast<unsigned>(ARDUINO_OTA_PORT));
   }
 
   ArduinoOTA.begin();
   otaUdpStarted = true;
 
+#if defined(ESP8266)
   MDNS.addService("arduino", "tcp", ARDUINO_OTA_PORT);
-  logSysf("Arduino-OTA aktiv: %s:%u/udp (pio run -e d1_mini_ota -t upload)",
+#else
+  MDNS.enableArduino(ARDUINO_OTA_PORT, otaPasswordEnabled());
+#endif
+  logSysf("Arduino-OTA aktiv: %s:%u",
           WiFi.localIP().toString().c_str(),
           static_cast<unsigned>(ARDUINO_OTA_PORT));
 }

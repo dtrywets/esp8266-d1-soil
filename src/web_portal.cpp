@@ -5,14 +5,17 @@
 #include "firmware_version.h"
 #include "network_config.h"
 #include "ota_update.h"
+#include "platform_io.h"
+#include "project_config.h"
 #include "soil_sensor.h"
 
 #include <ArduinoJson.h>
 #include <DNSServer.h>
-#include <ESP8266mDNS.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266WiFi.h>
+#if defined(ESP8266)
 #include <Updater.h>
+#else
+#include <Update.h>
+#endif
 
 #ifndef DEVICE_NAME
 #define DEVICE_NAME "Bodenfeuchte 1"
@@ -26,7 +29,7 @@ static constexpr uint16_t kWebPort = 80;
 static constexpr uint32_t kWifiConnectTimeoutMs = 15000;
 static constexpr uint32_t kWifiRetryMs = 5000;
 
-static ESP8266WebServer server(kWebPort);
+static PlatformWebServer server(kWebPort);
 static DNSServer dnsServer;
 static NetworkSettings networkSettings;
 static NetworkSettings compileDefaults;
@@ -43,9 +46,9 @@ static bool wifiConnectedLogged = false;
 static bool mdnsStarted = false;
 
 static void beginWifiStation() {
-  WiFi.mode(WIFI_STA);
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
-  WiFi.hostname(WIFI_HOSTNAME);
+  platformWifiBeginStation();
+  platformWifiNoSleep();
+  platformSetHostname(WIFI_HOSTNAME);
   WiFi.begin(networkSettings.wifiSsid.c_str(),
              networkSettings.wifiPassword.c_str());
 }
@@ -78,10 +81,10 @@ static bool isCompileDefaultSsid(const String &ssid) {
 }
 
 static String apNameFromMac() {
-  const uint32_t chipId = ESP.getChipId();
+  const uint32_t chipId = platformChipIdSuffix();
   char suffix[5];
   snprintf(suffix, sizeof(suffix), "%04X", chipId & 0xFFFF);
-  return String("D1Soil-") + suffix;
+  return String(AP_SSID_PREFIX) + suffix;
 }
 
 static void startApMode() {
@@ -155,7 +158,7 @@ static void handleStatus() {
   doc["rssi"] = WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0;
   doc["arduino_ota_active"] = otaUpdateIsActive();
   doc["arduino_ota_port"] = otaUpdatePort();
-  doc["chip_model"] = "ESP8266";
+  doc["chip_model"] = platformChipModel();
   doc["mac"] = WiFi.macAddress();
   doc["moisture_percent"] = reading.valid ? soilSensorSmoothedPercent() : 0.0f;
   doc["moisture_raw"] = reading.rawAdc;
@@ -334,7 +337,7 @@ static void handleWifiScan() {
     JsonObject net = networks.add<JsonObject>();
     net["ssid"] = WiFi.SSID(i);
     net["rssi"] = WiFi.RSSI(i);
-    net["secure"] = WiFi.encryptionType(i) != ENC_TYPE_NONE;
+    net["secure"] = !platformWifiScanIsOpen(WiFi.encryptionType(i));
   }
   WiFi.scanDelete();
   sendJson(200, doc);

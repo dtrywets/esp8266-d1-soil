@@ -1,5 +1,7 @@
 #include "network_config.h"
 
+#if defined(ESP8266)
+
 #include "eeprom_store.h"
 
 #include <EEPROM.h>
@@ -19,24 +21,24 @@ struct NetworkStored {
   char mqttPass[65] = "";
 };
 
+#else
+
+#include <Preferences.h>
+
+static Preferences networkPreferences;
+static const char *kNamespace = "d1_soil_net";
+
+#endif
+
 static bool isPlaceholderWifiSsid(const String &ssid) {
   return ssid.isEmpty() || ssid == "your-wifi";
 }
 
-static void loadStored(NetworkStored &stored) {
+void networkConfigLoad(NetworkSettings &settings, const NetworkSettings &defaults) {
+#if defined(ESP8266)
+  NetworkStored stored;
   eepromStoreBegin();
   EEPROM.get(kOffset, stored);
-}
-
-static void saveStored(const NetworkStored &stored) {
-  eepromStoreBegin();
-  EEPROM.put(kOffset, stored);
-  EEPROM.commit();
-}
-
-void networkConfigLoad(NetworkSettings &settings, const NetworkSettings &defaults) {
-  NetworkStored stored;
-  loadStored(stored);
 
   if (stored.magic != kMagic) {
     settings = defaults;
@@ -51,6 +53,23 @@ void networkConfigLoad(NetworkSettings &settings, const NetworkSettings &default
   settings.mqttPort = stored.mqttPort;
   settings.mqttUser = stored.mqttUser;
   settings.mqttPassword = stored.mqttPass;
+#else
+  if (!networkPreferences.begin(kNamespace, true)) {
+    networkPreferences.end();
+    networkPreferences.begin(kNamespace, false);
+  }
+
+  settings.wifiConfigured = networkPreferences.getBool("wifi_ok", false);
+  settings.wifiSsid = networkPreferences.getString("wifi_ssid", "");
+  settings.wifiPassword = networkPreferences.getString("wifi_pass", "");
+  settings.mqttHost = networkPreferences.getString("mqtt_host", defaults.mqttHost);
+  settings.mqttPort =
+      static_cast<uint16_t>(networkPreferences.getUShort("mqtt_port", defaults.mqttPort));
+  settings.mqttUser = networkPreferences.getString("mqtt_user", defaults.mqttUser);
+  settings.mqttPassword =
+      networkPreferences.getString("mqtt_pass", defaults.mqttPassword);
+  networkPreferences.end();
+#endif
 
   if (settings.wifiSsid.isEmpty() && !isPlaceholderWifiSsid(defaults.wifiSsid)) {
     settings.wifiSsid = defaults.wifiSsid;
@@ -63,6 +82,7 @@ void networkConfigLoad(NetworkSettings &settings, const NetworkSettings &default
 }
 
 void networkConfigSave(const NetworkSettings &settings) {
+#if defined(ESP8266)
   NetworkStored stored;
   stored.magic = kMagic;
   stored.wifiOk = true;
@@ -72,11 +92,34 @@ void networkConfigSave(const NetworkSettings &settings) {
   stored.mqttPort = settings.mqttPort;
   strncpy(stored.mqttUser, settings.mqttUser.c_str(), sizeof(stored.mqttUser) - 1);
   strncpy(stored.mqttPass, settings.mqttPassword.c_str(), sizeof(stored.mqttPass) - 1);
-  saveStored(stored);
+  eepromStoreBegin();
+  EEPROM.put(kOffset, stored);
+  EEPROM.commit();
+#else
+  networkPreferences.begin(kNamespace, false);
+  networkPreferences.putBool("wifi_ok", true);
+  networkPreferences.putString("wifi_ssid", settings.wifiSsid);
+  networkPreferences.putString("wifi_pass", settings.wifiPassword);
+  networkPreferences.putString("mqtt_host", settings.mqttHost);
+  networkPreferences.putUShort("mqtt_port", settings.mqttPort);
+  networkPreferences.putString("mqtt_user", settings.mqttUser);
+  networkPreferences.putString("mqtt_pass", settings.mqttPassword);
+  networkPreferences.end();
+#endif
 }
 
 bool networkConfigHasStoredWifi() {
+#if defined(ESP8266)
   NetworkStored stored;
-  loadStored(stored);
+  eepromStoreBegin();
+  EEPROM.get(kOffset, stored);
   return stored.magic == kMagic && stored.wifiOk && stored.wifiSsid[0] != '\0';
+#else
+  networkPreferences.begin(kNamespace, true);
+  const bool configured =
+      networkPreferences.getBool("wifi_ok", false) &&
+      !networkPreferences.getString("wifi_ssid", "").isEmpty();
+  networkPreferences.end();
+  return configured;
+#endif
 }
