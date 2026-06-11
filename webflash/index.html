@@ -50,9 +50,9 @@
     <div class="card">
       <h2>Einrichten</h2>
       <p style="margin:0;color:var(--muted);font-size:.875rem">
-        Verbindet per <strong>Web Serial</strong> (Chrome/Edge). Bereits geflashte Geräte werden
-        erkannt — dann <strong>ohne erneutes Flashen</strong> direkt zur WLAN-Einrichtung.
-        Neue oder fremde Firmware wird automatisch installiert, danach ebenfalls WLAN im selben Dialog.
+        Verbindet per <strong>Web Serial</strong> (Chrome/Edge).         Bereits geflashte Geräte werden per Improv erkannt — im Dialog
+        <strong>„Mit WLAN verbinden“</strong> wählen (oder nach Neuinstallation automatisch).
+        Fremde Firmware wird installiert, danach WLAN im selben Dialog.
       </p>
       <div class="chips">
         <span class="chip">ESP8266 (D1 Mini)</span>
@@ -64,9 +64,9 @@
         <button slot="activate" class="btn">USB verbinden</button>
       </esp-web-install-button>
       <div class="msg ok" style="margin-top:.85rem">
-        Bereits installiert? USB verbinden → Firmware wird erkannt → WLAN-Auswahl erscheint sofort.
-        Nach der Einrichtung speichert das Gerät SSID/Passwort und startet neu — Dashboard unter
-        <code>http://&lt;IP&gt;/</code>.
+        Bereits installiert? USB verbinden → Gerät erkannt → im Dialog
+        <strong>„Mit WLAN verbinden“</strong> tippen. Nach Neu-Flash (mit Löschen) erscheint
+        die WLAN-Auswahl automatisch. Dashboard danach unter <code>http://&lt;IP&gt;/</code>.
       </div>
     </div>
 
@@ -209,21 +209,6 @@ AOUT ─────────────────────────
     </div>
   </main>
   <footer>esp-web-tools · esptool-js · Bodenfeuchte Soil Sensor</footer>
-  <script type="module">
-    import 'https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module';
-
-    const FIRMWARE_NAME = 'Bodenfeuchte Soil Sensor';
-
-    customElements.whenDefined('esp-web-install-button').then(() => {
-      const button = document.querySelector('esp-web-install-button');
-      button.overrides = {
-        checkSameFirmware(manifest, improvInfo) {
-          const expected = (manifest.name || FIRMWARE_NAME).toLowerCase().trim();
-          const actual = (improvInfo.firmware || improvInfo.name || '').toLowerCase().trim();
-          return expected === actual;
-        },
-      };
-    });
-  </script>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </body>
 </html>
