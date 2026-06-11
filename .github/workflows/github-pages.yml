@@ -47,7 +47,7 @@ jobs:
         run: pip install --upgrade platformio intelhex
 
       - name: Firmware bauen und Web-Flash-Artefakte erzeugen
-        run: ./scripts/build-webflash.sh
+        run: bash scripts/build-webflash.sh
 
       - name: GitHub Pages Artefakt hochladen
         uses: actions/upload-pages-artifact@v4
