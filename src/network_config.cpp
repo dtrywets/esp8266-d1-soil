@@ -27,11 +27,8 @@ struct NetworkStored {
 
 static const char *kNamespace = "d1_soil_net";
 
-static bool openNetworkPrefs(Preferences &prefs, bool readOnly) {
-  if (prefs.begin(kNamespace, readOnly)) {
-    return true;
-  }
-  prefs.end();
+static bool openNetworkPrefs(Preferences &prefs) {
+  // RW-Modus: legt Namespace an, wenn nach Flash-Löschen noch keiner existiert.
   return prefs.begin(kNamespace, false);
 }
 
@@ -62,7 +59,7 @@ void networkConfigLoad(NetworkSettings &settings, const NetworkSettings &default
   settings.mqttPassword = stored.mqttPass;
 #else
   Preferences prefs;
-  if (!openNetworkPrefs(prefs, true)) {
+  if (!openNetworkPrefs(prefs)) {
     settings = defaults;
     settings.wifiConfigured = false;
     return;
@@ -116,7 +113,7 @@ void networkConfigSave(const NetworkSettings &settings) {
   EEPROM.commit();
 #else
   Preferences prefs;
-  if (!openNetworkPrefs(prefs, false)) {
+  if (!openNetworkPrefs(prefs)) {
     return;
   }
   prefs.putBool("wifi_ok", true);
@@ -138,7 +135,7 @@ bool networkConfigHasStoredWifi() {
   return stored.magic == kMagic && stored.wifiOk && stored.wifiSsid[0] != '\0';
 #else
   Preferences prefs;
-  if (!prefs.begin(kNamespace, true)) {
+  if (!prefs.begin(kNamespace, false)) {
     return false;
   }
   const bool configured = prefs.getBool("wifi_ok", false) && prefs.isKey("wifi_ssid") &&

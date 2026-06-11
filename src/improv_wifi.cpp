@@ -46,7 +46,19 @@ static ImprovWiFi &improvClient() {
   return *improvSerial;
 }
 
-static bool needsWifiSetup() { return !networkConfigHasStoredWifi(); }
+// NVS nur einmal prüfen — nicht in jeder loop()-Iteration (sonst Serial-Flut + kein Improv).
+static int8_t wifiSetupCached = -1;
+
+static void refreshWifiSetupCache() {
+  wifiSetupCached = networkConfigHasStoredWifi() ? 0 : 1;
+}
+
+static bool needsWifiSetup() {
+  if (wifiSetupCached < 0) {
+    refreshWifiSetupCache();
+  }
+  return wifiSetupCached == 1;
+}
 
 static ImprovTypes::ChipFamily improvChipFamily() {
 #if defined(ESP8266)
@@ -99,6 +111,8 @@ static void improvOnError(ImprovTypes::Error err) {
 }
 
 void improvWifiBegin() {
+  refreshWifiSetupCache();
+
   if (needsWifiSetup()) {
 #if defined(ESP8266)
     Serial.setDebugOutput(false);

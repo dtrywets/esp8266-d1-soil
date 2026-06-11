@@ -7,6 +7,8 @@
 
 #if defined(ESP8266)
 #include "eeprom_store.h"
+#elif defined(ESP32)
+#include <nvs_flash.h>
 #endif
 #include "event_log.h"
 #include "firmware_version.h"
@@ -316,12 +318,24 @@ static void startNormalOperation() {
   logSysf("Firmware %s", FIRMWARE_VERSION_LABEL);
 }
 
+#if defined(ESP32)
+static void platformEnsureNvs() {
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    nvs_flash_erase();
+    nvs_flash_init();
+  }
+}
+#endif
+
 void setup() {
   Serial.begin(115200);
   delay(50);
 
 #if defined(ESP8266)
   eepromStoreBegin();
+#elif defined(ESP32)
+  platformEnsureNvs();
 #endif
 
   improvWifiBegin();

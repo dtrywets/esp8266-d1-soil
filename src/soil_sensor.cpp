@@ -146,9 +146,9 @@ void soilCalLoad(SoilCalibration &cal, const SoilCalibration &defaults) {
   cal.label = stored.label;
 #else
   Preferences prefs;
-  if (!prefs.begin(kCalNamespace, true)) {
-    prefs.end();
-    prefs.begin(kCalNamespace, false);
+  if (!prefs.begin(kCalNamespace, false)) {
+    cal = defaults;
+    return;
   }
 
   cal.dryAdc = prefs.isKey("dry_adc")
