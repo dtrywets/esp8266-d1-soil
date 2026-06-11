@@ -94,6 +94,13 @@ void improvWifiBegin() {
   }
 #endif
 
+  if (needsWifiSetup()) {
+    WiFi.persistent(false);
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    delay(50);
+  }
+
   improvSerial.setDeviceInfo(improvChipFamily(), IMPROV_FIRMWARE_NAME,
                              FIRMWARE_VERSION_LABEL, DEVICE_NAME,
                              "http://{LOCAL_IPV4}/");
@@ -120,7 +127,7 @@ void improvWifiLoop() {
   }
 
   const uint32_t now = millis();
-  if (now - lastAnnounceMs >= 500) {
+  if (now - lastAnnounceMs >= 250) {
     improvSerial.announceAuthorized();
     lastAnnounceMs = now;
   }

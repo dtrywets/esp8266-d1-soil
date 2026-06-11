@@ -28,6 +28,16 @@
     code{font-size:.85em}
     footer{text-align:center;color:var(--muted);font-size:.8rem;padding:1rem}
     esp-web-install-button{display:block;margin-top:1rem}
+    .btn-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+    .btn-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    #wifi-dialog[hidden]{display:none!important}
+    #wifi-dialog{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:100}
+    .wifi-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;max-width:420px;width:100%}
+    .wifi-panel h3{margin:0 0 .75rem;font-size:1rem}
+    .wifi-field{margin:.65rem 0}
+    .wifi-field label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.25rem}
+    .wifi-field input,.wifi-field select{width:100%;padding:.45rem .55rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+    #wifi-busy[hidden],#wifi-result[hidden]{display:none!important}
     table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.5rem 0}
     th,td{padding:.45rem .55rem;border:1px solid var(--border);text-align:left;vertical-align:top}
     th{background:var(--bg);font-weight:600;color:var(--text)}
@@ -50,23 +60,55 @@
     <div class="card">
       <h2>Einrichten</h2>
       <p style="margin:0;color:var(--muted);font-size:.875rem">
-        Verbindet per <strong>Web Serial</strong> (Chrome/Edge).         Bereits geflashte Geräte werden per Improv erkannt — im Dialog
-        <strong>„Mit WLAN verbinden“</strong> wählen (oder nach Neuinstallation automatisch).
-        Fremde Firmware wird installiert, danach WLAN im selben Dialog.
+        Zwei Schritte: zuerst <strong>Firmware flashen</strong> (einmalig oder Update),
+        danach <strong>WLAN einrichten</strong> — eigener Dialog mit 20&nbsp;s Erkennungszeit
+        (zuverlässiger als der eingebaute ESP-Web-Tools-Dialog).
       </p>
       <div class="chips">
         <span class="chip">ESP8266 (D1 Mini)</span>
         <span class="chip">ESP32-C3</span>
-        <span class="chip">Firmware-Erkennung</span>
-        <span class="chip">WLAN im Dialog</span>
+        <span class="chip">Improv Wi-Fi</span>
       </div>
-      <esp-web-install-button manifest="manifest.json">
-        <button slot="activate" class="btn">USB verbinden</button>
-      </esp-web-install-button>
+      <div class="btn-row">
+        <esp-web-install-button manifest="manifest.json">
+          <button slot="activate" class="btn">Firmware flashen</button>
+        </esp-web-install-button>
+        <button type="button" class="btn btn-secondary" id="wifi-open">WLAN einrichten</button>
+      </div>
       <div class="msg ok" style="margin-top:.85rem">
-        Bereits installiert? USB verbinden → Gerät erkannt → im Dialog
-        <strong>„Mit WLAN verbinden“</strong> tippen. Nach Neu-Flash (mit Löschen) erscheint
-        die WLAN-Auswahl automatisch. Dashboard danach unter <code>http://&lt;IP&gt;/</code>.
+        <strong>Reihenfolge:</strong> Flashen (mit „Flash löschen“ beim ersten Mal) → danach
+        „WLAN einrichten“. Altes WLAN zurücksetzen: im Flash-Dialog „Benutzerdaten löschen“.
+      </div>
+    </div>
+
+    <div id="wifi-dialog" hidden>
+      <div class="wifi-panel">
+        <h3>WLAN einrichten</h3>
+        <div id="wifi-status" class="msg" hidden></div>
+        <div id="wifi-busy" hidden>Bitte warten …</div>
+        <div id="wifi-form">
+          <div class="wifi-field">
+            <label for="wifi-ssid-select">Netzwerk</label>
+            <select id="wifi-ssid-select"></select>
+          </div>
+          <div class="wifi-field">
+            <label for="wifi-ssid">SSID (manuell)</label>
+            <input id="wifi-ssid" type="text" autocomplete="off" placeholder="WLAN-Name">
+          </div>
+          <div class="wifi-field">
+            <label for="wifi-password">Passwort</label>
+            <input id="wifi-password" type="password" autocomplete="off">
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn" id="wifi-submit">Verbinden</button>
+            <button type="button" class="btn btn-secondary" id="wifi-scan">Netzwerke scannen</button>
+            <button type="button" class="btn btn-secondary" id="wifi-close">Schließen</button>
+          </div>
+        </div>
+        <div id="wifi-result" class="msg ok" hidden>
+          Fertig — Dashboard:
+          <a id="wifi-result-link" href="#" target="_blank" rel="noopener">öffnen</a>
+        </div>
       </div>
     </div>
 
@@ -208,7 +250,11 @@ AOUT ─────────────────────────
       </p>
     </div>
   </main>
-  <footer>esp-web-tools · esptool-js · Bodenfeuchte Soil Sensor</footer>
+  <footer>esp-web-tools · improv-wifi · esptool-js · Bodenfeuchte Soil Sensor</footer>
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <script type="module">
+    import { initWifiSetupUi } from './wifi-setup.js';
+    initWifiSetupUi();
+  </script>
 </body>
 </html>

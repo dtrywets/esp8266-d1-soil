@@ -11,10 +11,9 @@
 
 void ImprovWiFi::handleSerial()
 {
-
-  if (serial->available() > 0)
+  while (serial->available() > 0)
   {
-    uint8_t b = serial->read();
+    const uint8_t b = serial->read();
 
     if (parseImprovSerial(_position, b, _buffer))
     {
