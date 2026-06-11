@@ -1,7 +1,8 @@
 import { ImprovSerial } from 'https://unpkg.com/improv-wifi-serial-sdk@2.5.0/dist/serial.js';
 
 const IMPROV_FIRMWARE_NAME = 'Bodenfeuchte Soil Sensor';
-const IMPROV_INIT_TIMEOUT_MS = 20000;
+const IMPROV_INIT_TIMEOUT_MS = 30000;
+const POST_OPEN_RESET_WAIT_MS = 2500;
 const PROVISION_TIMEOUT_MS = 45000;
 
 function $(id) {
@@ -78,7 +79,9 @@ export async function startWifiSetup() {
 
   try {
     port = await openPort();
-    setStatus('Warte auf Improv (bis 20 s) …');
+    setStatus('USB geöffnet — warte auf Geräte-Neustart …');
+    await new Promise((resolve) => setTimeout(resolve, POST_OPEN_RESET_WAIT_MS));
+    setStatus('Warte auf Improv (bis 30 s) …');
     client = new ImprovSerial(port, console);
     await client.initialize(IMPROV_INIT_TIMEOUT_MS);
 
@@ -124,7 +127,7 @@ export async function startWifiSetup() {
     const msg = err.message || String(err);
     if (/not detected/i.test(msg)) {
       setStatus(
-        'Improv nicht erkannt — bitte mit „Flash löschen“ neu flashen, USB-Kabel prüfen (Daten, nicht nur Laden), dann erneut „WLAN einrichten“ und bis zu 20 s warten.',
+        'Improv nicht erkannt — bitte mit „Flash löschen“ neu flashen, USB-Kabel prüfen (Daten, nicht nur Laden), dann erneut „WLAN einrichten“ und bis zu 30 s warten.',
         'warn',
       );
     } else {

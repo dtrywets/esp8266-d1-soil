@@ -138,8 +138,12 @@ bool networkConfigHasStoredWifi() {
   if (!prefs.begin(kNamespace, false)) {
     return false;
   }
-  const bool configured = prefs.getBool("wifi_ok", false) && prefs.isKey("wifi_ssid") &&
-                          !prefs.getString("wifi_ssid", "").isEmpty();
+  const String ssid = prefs.isKey("wifi_ssid") ? prefs.getString("wifi_ssid", "") : "";
+  const bool configured =
+      prefs.getBool("wifi_ok", false) && !ssid.isEmpty() && !isPlaceholderWifiSsid(ssid);
+  if (prefs.getBool("wifi_ok", false) && !configured) {
+    prefs.putBool("wifi_ok", false);
+  }
   prefs.end();
   return configured;
 #endif

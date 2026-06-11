@@ -154,8 +154,11 @@ void improvWifiLoop() {
   }
 
   const uint32_t now = millis();
-  if (now - lastAnnounceMs >= 250) {
+  const uint32_t announceIntervalMs = now < 15000 ? 100 : 250;
+  if (now - lastAnnounceMs >= announceIntervalMs) {
     improvClient().announceAuthorized();
     lastAnnounceMs = now;
   }
+
+  delay(1);
 }

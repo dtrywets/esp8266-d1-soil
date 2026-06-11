@@ -369,6 +369,7 @@ void ImprovWiFi::setState(ImprovTypes::State state)
   data[10] = checksum;
 
   serial->write(data.data(), data.size());
+  serial->flush();
 }
 
 void ImprovWiFi::setError(ImprovTypes::Error error)
@@ -386,6 +387,7 @@ void ImprovWiFi::setError(ImprovTypes::Error error)
   data[10] = checksum;
 
   serial->write(data.data(), data.size());
+  serial->flush();
 }
 
 void ImprovWiFi::sendResponse(std::vector<uint8_t> &response)
@@ -403,6 +405,7 @@ void ImprovWiFi::sendResponse(std::vector<uint8_t> &response)
   data.push_back(checksum);
 
   serial->write(data.data(), data.size());
+  serial->flush();
 }
 
 std::vector<uint8_t> ImprovWiFi::build_rpc_response(ImprovTypes::Command command, const std::vector<std::string> &datum, bool add_checksum)

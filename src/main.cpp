@@ -330,7 +330,16 @@ static void platformEnsureNvs() {
 
 void setup() {
   Serial.begin(115200);
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+  {
+    const uint32_t usbWaitUntil = millis() + 3000;
+    while (!Serial && millis() < usbWaitUntil) {
+      delay(10);
+    }
+  }
+#else
   delay(50);
+#endif
 
 #if defined(ESP8266)
   eepromStoreBegin();
