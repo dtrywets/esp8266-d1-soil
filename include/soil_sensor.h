@@ -11,7 +11,7 @@
 struct SoilCalibration {
   uint16_t dryAdc = DEFAULT_DRY_ADC;
   uint16_t wetAdc = DEFAULT_WET_ADC;
-  String label = DEFAULT_SENSOR_LABEL;
+  String label;
 };
 
 struct SoilReading {

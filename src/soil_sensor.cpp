@@ -53,7 +53,6 @@ struct CalStored {
   char label[49] = DEFAULT_SENSOR_LABEL;
 };
 #else
-static Preferences calPreferences;
 static const char *kCalNamespace = "d1_soil_cal";
 #endif
 
@@ -146,17 +145,21 @@ void soilCalLoad(SoilCalibration &cal, const SoilCalibration &defaults) {
   cal.wetAdc = stored.wetAdc;
   cal.label = stored.label;
 #else
-  if (!calPreferences.begin(kCalNamespace, true)) {
-    calPreferences.end();
-    calPreferences.begin(kCalNamespace, false);
+  Preferences prefs;
+  if (!prefs.begin(kCalNamespace, true)) {
+    prefs.end();
+    prefs.begin(kCalNamespace, false);
   }
 
-  cal.dryAdc =
-      static_cast<uint16_t>(calPreferences.getUShort("dry_adc", defaults.dryAdc));
-  cal.wetAdc =
-      static_cast<uint16_t>(calPreferences.getUShort("wet_adc", defaults.wetAdc));
-  cal.label = calPreferences.getString("label", defaults.label);
-  calPreferences.end();
+  cal.dryAdc = prefs.isKey("dry_adc")
+                   ? static_cast<uint16_t>(prefs.getUShort("dry_adc", defaults.dryAdc))
+                   : defaults.dryAdc;
+  cal.wetAdc = prefs.isKey("wet_adc")
+                   ? static_cast<uint16_t>(prefs.getUShort("wet_adc", defaults.wetAdc))
+                   : defaults.wetAdc;
+  cal.label = prefs.isKey("label") ? prefs.getString("label", defaults.label)
+                                   : defaults.label;
+  prefs.end();
 #endif
 
   if (cal.dryAdc <= cal.wetAdc) {
@@ -175,11 +178,12 @@ void soilCalSave(const SoilCalibration &cal) {
   EEPROM.put(kCalOffset, stored);
   EEPROM.commit();
 #else
-  calPreferences.begin(kCalNamespace, false);
-  calPreferences.putUShort("dry_adc", cal.dryAdc);
-  calPreferences.putUShort("wet_adc", cal.wetAdc);
-  calPreferences.putString("label", cal.label);
-  calPreferences.end();
+  Preferences prefs;
+  prefs.begin(kCalNamespace, false);
+  prefs.putUShort("dry_adc", cal.dryAdc);
+  prefs.putUShort("wet_adc", cal.wetAdc);
+  prefs.putString("label", cal.label);
+  prefs.end();
 #endif
 }
 
@@ -208,6 +212,7 @@ void soilSensorBegin() {
 #endif
 
   SoilCalibration defaults;
+  defaults.label = DEFAULT_SENSOR_LABEL;
   soilCalLoad(calibration, defaults);
   logSysf("Kalibrierung: trocken=%u, nass=%u, Label=%s", calibration.dryAdc,
           calibration.wetAdc, calibration.label.c_str());

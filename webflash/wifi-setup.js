@@ -121,7 +121,15 @@ export async function startWifiSetup() {
     $('wifi-scan').onclick = () => scanNetworks(client);
   } catch (err) {
     console.error(err);
-    setStatus(err.message || String(err), 'warn');
+    const msg = err.message || String(err);
+    if (/not detected/i.test(msg)) {
+      setStatus(
+        'Improv nicht erkannt — bitte mit „Flash löschen“ neu flashen, USB-Kabel prüfen (Daten, nicht nur Laden), dann erneut „WLAN einrichten“ und bis zu 20 s warten.',
+        'warn',
+      );
+    } else {
+      setStatus(msg, 'warn');
+    }
     setBusy(false);
     if (client) {
       try {

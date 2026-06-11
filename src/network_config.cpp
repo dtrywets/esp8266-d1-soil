@@ -25,8 +25,15 @@ struct NetworkStored {
 
 #include <Preferences.h>
 
-static Preferences networkPreferences;
 static const char *kNamespace = "d1_soil_net";
+
+static bool openNetworkPrefs(Preferences &prefs, bool readOnly) {
+  if (prefs.begin(kNamespace, readOnly)) {
+    return true;
+  }
+  prefs.end();
+  return prefs.begin(kNamespace, false);
+}
 
 #endif
 
@@ -54,21 +61,33 @@ void networkConfigLoad(NetworkSettings &settings, const NetworkSettings &default
   settings.mqttUser = stored.mqttUser;
   settings.mqttPassword = stored.mqttPass;
 #else
-  if (!networkPreferences.begin(kNamespace, true)) {
-    networkPreferences.end();
-    networkPreferences.begin(kNamespace, false);
+  Preferences prefs;
+  if (!openNetworkPrefs(prefs, true)) {
+    settings = defaults;
+    settings.wifiConfigured = false;
+    return;
   }
 
-  settings.wifiConfigured = networkPreferences.getBool("wifi_ok", false);
-  settings.wifiSsid = networkPreferences.getString("wifi_ssid", "");
-  settings.wifiPassword = networkPreferences.getString("wifi_pass", "");
-  settings.mqttHost = networkPreferences.getString("mqtt_host", defaults.mqttHost);
-  settings.mqttPort =
-      static_cast<uint16_t>(networkPreferences.getUShort("mqtt_port", defaults.mqttPort));
-  settings.mqttUser = networkPreferences.getString("mqtt_user", defaults.mqttUser);
+  settings.wifiConfigured = prefs.getBool("wifi_ok", false);
+  settings.wifiSsid =
+      prefs.isKey("wifi_ssid") ? prefs.getString("wifi_ssid", "") : "";
+  settings.wifiPassword =
+      prefs.isKey("wifi_pass") ? prefs.getString("wifi_pass", "") : "";
+  settings.mqttHost =
+      prefs.isKey("mqtt_host") ? prefs.getString("mqtt_host", defaults.mqttHost)
+                               : defaults.mqttHost;
+  settings.mqttPort = prefs.isKey("mqtt_port")
+                          ? static_cast<uint16_t>(prefs.getUShort(
+                                "mqtt_port", defaults.mqttPort))
+                          : defaults.mqttPort;
+  settings.mqttUser =
+      prefs.isKey("mqtt_user") ? prefs.getString("mqtt_user", defaults.mqttUser)
+                               : defaults.mqttUser;
   settings.mqttPassword =
-      networkPreferences.getString("mqtt_pass", defaults.mqttPassword);
-  networkPreferences.end();
+      prefs.isKey("mqtt_pass")
+          ? prefs.getString("mqtt_pass", defaults.mqttPassword)
+          : defaults.mqttPassword;
+  prefs.end();
 #endif
 
   if (settings.wifiSsid.isEmpty() && !isPlaceholderWifiSsid(defaults.wifiSsid)) {
@@ -96,15 +115,18 @@ void networkConfigSave(const NetworkSettings &settings) {
   EEPROM.put(kOffset, stored);
   EEPROM.commit();
 #else
-  networkPreferences.begin(kNamespace, false);
-  networkPreferences.putBool("wifi_ok", true);
-  networkPreferences.putString("wifi_ssid", settings.wifiSsid);
-  networkPreferences.putString("wifi_pass", settings.wifiPassword);
-  networkPreferences.putString("mqtt_host", settings.mqttHost);
-  networkPreferences.putUShort("mqtt_port", settings.mqttPort);
-  networkPreferences.putString("mqtt_user", settings.mqttUser);
-  networkPreferences.putString("mqtt_pass", settings.mqttPassword);
-  networkPreferences.end();
+  Preferences prefs;
+  if (!openNetworkPrefs(prefs, false)) {
+    return;
+  }
+  prefs.putBool("wifi_ok", true);
+  prefs.putString("wifi_ssid", settings.wifiSsid);
+  prefs.putString("wifi_pass", settings.wifiPassword);
+  prefs.putString("mqtt_host", settings.mqttHost);
+  prefs.putUShort("mqtt_port", settings.mqttPort);
+  prefs.putString("mqtt_user", settings.mqttUser);
+  prefs.putString("mqtt_pass", settings.mqttPassword);
+  prefs.end();
 #endif
 }
 
@@ -115,11 +137,13 @@ bool networkConfigHasStoredWifi() {
   EEPROM.get(kOffset, stored);
   return stored.magic == kMagic && stored.wifiOk && stored.wifiSsid[0] != '\0';
 #else
-  networkPreferences.begin(kNamespace, true);
-  const bool configured =
-      networkPreferences.getBool("wifi_ok", false) &&
-      !networkPreferences.getString("wifi_ssid", "").isEmpty();
-  networkPreferences.end();
+  Preferences prefs;
+  if (!prefs.begin(kNamespace, true)) {
+    return false;
+  }
+  const bool configured = prefs.getBool("wifi_ok", false) && prefs.isKey("wifi_ssid") &&
+                          !prefs.getString("wifi_ssid", "").isEmpty();
+  prefs.end();
   return configured;
 #endif
 }

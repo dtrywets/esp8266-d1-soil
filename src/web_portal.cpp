@@ -30,8 +30,15 @@ static constexpr uint16_t kWebPort = 80;
 static constexpr uint32_t kWifiConnectTimeoutMs = 15000;
 static constexpr uint32_t kWifiRetryMs = 5000;
 
-static PlatformWebServer server(kWebPort);
+static PlatformWebServer *serverPtr = nullptr;
 static DNSServer dnsServer;
+
+static PlatformWebServer &httpServer() {
+  if (!serverPtr) {
+    serverPtr = new PlatformWebServer(kWebPort);
+  }
+  return *serverPtr;
+}
 static NetworkSettings networkSettings;
 static NetworkSettings compileDefaults;
 static String apSsid;
@@ -117,7 +124,7 @@ static void stopApMode() {
 static void sendJson(int code, const JsonDocument &doc) {
   String payload;
   serializeJson(doc, payload);
-  server.send(code, "application/json", payload);
+  httpServer().send(code, "application/json", payload);
 }
 
 static void sendError(int code, const char *message) {
@@ -134,7 +141,7 @@ static void applyCalibrationAndNotify(const SoilCalibration &cal) {
 
 static void handleRoot() {
   logWeb("Dashboard geöffnet (GET /)");
-  server.send_P(200, "text/html; charset=utf-8", kDashboardHtml);
+  httpServer().send_P(200, "text/html; charset=utf-8", kDashboardHtml);
 }
 
 static void handleStatus() {
@@ -197,7 +204,7 @@ static void handleSoilMeasure() {
 
 static void handleSoilCalibration() {
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
+  if (deserializeJson(doc, httpServer().arg("plain"))) {
     sendError(400, "Invalid JSON");
     return;
   }
@@ -281,7 +288,7 @@ static void handleGetConfig() {
 
 static void handlePostConfig() {
   JsonDocument doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
+  if (deserializeJson(doc, httpServer().arg("plain"))) {
     sendError(400, "Invalid JSON");
     return;
   }
@@ -346,7 +353,7 @@ static void handleWifiScan() {
 
 static void handleRestart() {
   logWeb("Neustart angefordert");
-  server.send(200, "application/json", "{\"status\":\"restarting\"}");
+  httpServer().send(200, "application/json", "{\"status\":\"restarting\"}");
   delay(250);
   ESP.restart();
 }
@@ -354,7 +361,7 @@ static void handleRestart() {
 static bool firmwareUploadFailed = false;
 
 static void handleFirmwareUpload() {
-  HTTPUpload &upload = server.upload();
+  HTTPUpload &upload = httpServer().upload();
 
   if (upload.status == UPLOAD_FILE_START) {
     firmwareUploadFailed = false;
@@ -408,26 +415,26 @@ static void handleFirmwareComplete() {
 }
 
 static void handleCaptivePortal() {
-  server.sendHeader("Location", "http://192.168.4.1/", true);
-  server.send(302, "text/plain", "");
+  httpServer().sendHeader("Location", "http://192.168.4.1/", true);
+  httpServer().send(302, "text/plain", "");
 }
 
 static void setupWebRoutes() {
-  server.on("/", HTTP_GET, handleRoot);
-  server.on("/api/status", HTTP_GET, handleStatus);
-  server.on("/api/config", HTTP_GET, handleGetConfig);
-  server.on("/api/config", HTTP_POST, handlePostConfig);
-  server.on("/api/wifi/scan", HTTP_GET, handleWifiScan);
-  server.on("/api/restart", HTTP_POST, handleRestart);
-  server.on("/api/soil", HTTP_GET, handleSoilGet);
-  server.on("/api/soil/measure", HTTP_POST, handleSoilMeasure);
-  server.on("/api/soil/calibration", HTTP_POST, handleSoilCalibration);
-  server.on("/api/soil/calibrate/dry", HTTP_POST, handleCalibrateDry);
-  server.on("/api/soil/calibrate/wet", HTTP_POST, handleCalibrateWet);
-  server.on("/api/firmware", HTTP_POST, handleFirmwareComplete, handleFirmwareUpload);
+  httpServer().on("/", HTTP_GET, handleRoot);
+  httpServer().on("/api/status", HTTP_GET, handleStatus);
+  httpServer().on("/api/config", HTTP_GET, handleGetConfig);
+  httpServer().on("/api/config", HTTP_POST, handlePostConfig);
+  httpServer().on("/api/wifi/scan", HTTP_GET, handleWifiScan);
+  httpServer().on("/api/restart", HTTP_POST, handleRestart);
+  httpServer().on("/api/soil", HTTP_GET, handleSoilGet);
+  httpServer().on("/api/soil/measure", HTTP_POST, handleSoilMeasure);
+  httpServer().on("/api/soil/calibration", HTTP_POST, handleSoilCalibration);
+  httpServer().on("/api/soil/calibrate/dry", HTTP_POST, handleCalibrateDry);
+  httpServer().on("/api/soil/calibrate/wet", HTTP_POST, handleCalibrateWet);
+  httpServer().on("/api/firmware", HTTP_POST, handleFirmwareComplete, handleFirmwareUpload);
 
-  server.onNotFound([]() {
-    if (apMode && server.method() == HTTP_GET) {
+  httpServer().onNotFound([]() {
+    if (apMode && httpServer().method() == HTTP_GET) {
       handleCaptivePortal();
       return;
     }
@@ -440,7 +447,7 @@ static void startWebServer() {
     return;
   }
   setupWebRoutes();
-  server.begin();
+  httpServer().begin();
   webStarted = true;
   logSys("Web-Dashboard gestartet auf Port 80");
 }
@@ -552,7 +559,7 @@ void webPortalLoop() {
     dnsServer.processNextRequest();
   }
 
-  server.handleClient();
+  httpServer().handleClient();
   tryConnectWifi();
 }
 

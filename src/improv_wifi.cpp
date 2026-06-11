@@ -7,6 +7,10 @@
 
 #include <ImprovWiFiLibrary.h>
 
+#if defined(ESP32)
+#include <esp_log.h>
+#endif
+
 #ifndef WIFI_HOSTNAME
 #define WIFI_HOSTNAME "D1Soil1"
 #endif
@@ -31,9 +35,16 @@
 #define MQTT_PASSWORD ""
 #endif
 
-static ImprovWiFi improvSerial(&Serial);
+static ImprovWiFi *improvSerial = nullptr;
 static bool improvStarted = false;
 static uint32_t lastAnnounceMs = 0;
+
+static ImprovWiFi &improvClient() {
+  if (!improvSerial) {
+    improvSerial = new ImprovWiFi(&Serial);
+  }
+  return *improvSerial;
+}
 
 static bool needsWifiSetup() { return !networkConfigHasStoredWifi(); }
 
@@ -88,11 +99,13 @@ static void improvOnError(ImprovTypes::Error err) {
 }
 
 void improvWifiBegin() {
-#if defined(ESP8266)
   if (needsWifiSetup()) {
+#if defined(ESP8266)
     Serial.setDebugOutput(false);
-  }
+#elif defined(ESP32)
+    esp_log_level_set("*", ESP_LOG_NONE);
 #endif
+  }
 
   if (needsWifiSetup()) {
     WiFi.persistent(false);
@@ -101,16 +114,16 @@ void improvWifiBegin() {
     delay(50);
   }
 
-  improvSerial.setDeviceInfo(improvChipFamily(), IMPROV_FIRMWARE_NAME,
-                             FIRMWARE_VERSION_LABEL, DEVICE_NAME,
-                             "http://{LOCAL_IPV4}/");
-  improvSerial.setCustomConnectWiFi(improvCustomConnect);
-  improvSerial.onImprovConnected(improvOnConnected);
-  improvSerial.onImprovError(improvOnError);
+  improvClient().setDeviceInfo(improvChipFamily(), IMPROV_FIRMWARE_NAME,
+                               FIRMWARE_VERSION_LABEL, DEVICE_NAME,
+                               "http://{LOCAL_IPV4}/");
+  improvClient().setCustomConnectWiFi(improvCustomConnect);
+  improvClient().onImprovConnected(improvOnConnected);
+  improvClient().onImprovError(improvOnError);
   improvStarted = true;
 
   if (needsWifiSetup()) {
-    improvSerial.announceAuthorized();
+    improvClient().announceAuthorized();
     lastAnnounceMs = millis();
   }
 }
@@ -120,7 +133,7 @@ void improvWifiLoop() {
     return;
   }
 
-  improvSerial.handleSerial();
+  improvClient().handleSerial();
 
   if (!needsWifiSetup()) {
     return;
@@ -128,7 +141,7 @@ void improvWifiLoop() {
 
   const uint32_t now = millis();
   if (now - lastAnnounceMs >= 250) {
-    improvSerial.announceAuthorized();
+    improvClient().announceAuthorized();
     lastAnnounceMs = now;
   }
 }

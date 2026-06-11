@@ -76,8 +76,16 @@
         <button type="button" class="btn btn-secondary" id="wifi-open">WLAN einrichten</button>
       </div>
       <div class="msg ok" style="margin-top:.85rem">
-        <strong>Reihenfolge:</strong> Flashen (mit „Flash löschen“ beim ersten Mal) → danach
-        „WLAN einrichten“. Altes WLAN zurücksetzen: im Flash-Dialog „Benutzerdaten löschen“.
+        <strong>Reihenfolge:</strong> Flashen (beim ESP32-C3 beim ersten Mal unbedingt
+        <strong>„Flash löschen“</strong> aktivieren) → danach „WLAN einrichten“.
+        Altes WLAN zurücksetzen: im Flash-Dialog „Benutzerdaten löschen“.
+      </div>
+      <div class="msg warn" style="margin-top:.65rem">
+        <strong>ESP32-C3:</strong> Wenn „WLAN einrichten“ mit
+        <em>Improv nicht erkannt</em> abbricht, fehlen meist Improv-Signale auf der seriellen
+        Leitung — oft durch kaputten NVS-Speicher oder alte Firmware ohne Provisioning-Modus.
+        Dann erneut flashen mit <strong>„Flash löschen“</strong> und danach direkt
+        „WLAN einrichten“ (Dialog offen lassen, bis zu 20&nbsp;s warten).
       </div>
     </div>
 
@@ -221,8 +229,9 @@ AOUT ─────────────────────────
         <li>Bei Problemen: Boot-Taste gedrückt halten, dann „Flashen“ starten</li>
       </ul>
       <div class="msg warn">
-        Beim ersten Flash wird der Flash-Speicher gelöscht (empfohlen).
-        WLAN direkt im Flash-Dialog nach der Installation setzen.
+        Beim ersten Flash (besonders ESP32-C3) <strong>„Flash löschen“</strong> aktivieren.
+        WLAN danach über den Button <strong>„WLAN einrichten“</strong> — nicht den kurzen
+        Improv-Dialog von ESP Web Tools nach dem Flash (Timeout zu knapp).
         MQTT optional im Dashboard oder per <code>config.h</code> vor dem Build.
       </div>
     </div>

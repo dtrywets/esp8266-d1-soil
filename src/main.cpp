@@ -56,8 +56,16 @@
 #define MQTT_DISCOVERY_PREFIX "homeassistant"
 #endif
 
-static WiFiClient wifiClient;
-static PubSubClient mqtt(wifiClient);
+static WiFiClient *wifiClientPtr = nullptr;
+static PubSubClient *mqttPtr = nullptr;
+
+static PubSubClient &mqttClient() {
+  if (!mqttPtr) {
+    wifiClientPtr = new WiFiClient();
+    mqttPtr = new PubSubClient(*wifiClientPtr);
+  }
+  return *mqttPtr;
+}
 
 static bool mqttSessionReady = false;
 static bool lastReadingPublished = false;
@@ -71,7 +79,7 @@ static String globalTopic(const char *suffix) {
 
 static bool mqttPublish(const String &topic, const char *payload, bool retain = false) {
   logMqttOut(topic.c_str(), payload, retain);
-  return mqtt.publish(topic.c_str(), payload, retain);
+  return mqttClient().publish(topic.c_str(), payload, retain);
 }
 
 static bool mqttPublish(const String &topic, const String &payload, bool retain = false) {
@@ -88,7 +96,7 @@ static void addDeviceBlock(JsonDocument &doc) {
 }
 
 static void publishHomeAssistantDiscovery() {
-  if (!mqtt.connected()) {
+  if (!mqttClient().connected()) {
     return;
   }
 
@@ -164,7 +172,7 @@ static void publishHomeAssistantDiscovery() {
 }
 
 static void publishSoilValues() {
-  if (!mqtt.connected()) {
+  if (!mqttClient().connected()) {
     return;
   }
 
@@ -230,7 +238,7 @@ static void subscribeMqttTopics() {
                         "calibration/wet/set"};
   for (const char *sub : subs) {
     const String topic = globalTopic(sub);
-    mqtt.subscribe(topic.c_str());
+    mqttClient().subscribe(topic.c_str());
     logMqttf("Subscribe: %s", topic.c_str());
   }
 }
@@ -242,10 +250,10 @@ static void connectMqtt() {
     return;
   }
 
-  mqtt.setCallback(mqttCallback);
-  mqtt.setBufferSize(2048);
+  mqttClient().setCallback(mqttCallback);
+  mqttClient().setBufferSize(2048);
 
-  if (mqtt.connected()) {
+  if (mqttClient().connected()) {
     webPortalSetMqttConnected(true);
     if (!mqttSessionReady) {
       mqttPublish(globalTopic("status"), "online", true);
@@ -259,7 +267,7 @@ static void connectMqtt() {
   }
 
   mqttSessionReady = false;
-  if (!webPortalConnectMqtt(mqtt, DEVICE_ID, globalTopic("status").c_str())) {
+  if (!webPortalConnectMqtt(mqttClient(), DEVICE_ID, globalTopic("status").c_str())) {
     return;
   }
 
@@ -275,18 +283,18 @@ static void mqttLoop() {
   connectMqtt();
 
   if (webPortalConsumeMqttRepublishRequest()) {
-    if (mqtt.connected()) {
+    if (mqttClient().connected()) {
       publishHomeAssistantDiscovery();
       publishSoilValues();
     }
   }
 
-  if (mqtt.connected()) {
-    mqtt.loop();
+  if (mqttClient().connected()) {
+    mqttClient().loop();
   }
 
   const SoilReading reading = soilSensorLastReading();
-  if (reading.valid && !lastReadingPublished && mqtt.connected()) {
+  if (reading.valid && !lastReadingPublished && mqttClient().connected()) {
     publishSoilValues();
   }
 }
