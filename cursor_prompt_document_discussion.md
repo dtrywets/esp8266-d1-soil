@@ -64,7 +64,7 @@ Soll ich einen Git-Commit anlegen?
 
 **User**
 
-https://github.com/dtrywets/esp8266-d1-soil 
+https://github.com/thelad-dev/esp8266-d1-soil 
 
 bitte commit und push
 
@@ -83,7 +83,7 @@ Noch kein Git-Repository — ich initialisiere es, lege den Remote an und pushe.
 
 Commit und Push sind durch.
 
-**Repository:** https://github.com/dtrywets/esp8266-d1-soil  
+**Repository:** https://github.com/thelad-dev/esp8266-d1-soil  
 **Branch:** `main`  
 **Commit:** `5e34154` — *Initialer Stand des ESP8266-Bodenfeuchte-Sensors mit MQTT, Web-Dashboard und HA-Discovery*
 
@@ -567,7 +567,7 @@ Die Firmware-Bins bleiben **gitignored**; sie werden nur in der CI gebaut und au
 
 Danach erreichbar unter:
 
-**https://dtrywets.github.io/esp8266-d1-soil/**
+**https://thelad-dev.github.io/esp8266-d1-soil/**
 
 HTTPS ist dabei — wichtig für **Web Serial** im Browser (Chrome/Edge).
 
@@ -591,7 +591,7 @@ Erledigt.
 
 **Commit:** `d77281d` — *Erweitert Projekt um Web-Flash-Portal, ESP32-C3 und GitHub Pages.*
 
-**Push:** `main` → `origin/main` ([dtrywets/esp8266-d1-soil](https://github.com/dtrywets/esp8266-d1-soil))
+**Push:** `main` → `origin/main` ([thelad-dev/esp8266-d1-soil](https://github.com/thelad-dev/esp8266-d1-soil))
 
 Der Workflow **„GitHub Pages (Web Flash)“** läuft bereits (war gerade in der Queue). Build dauert typischerweise ein paar Minuten — Fortschritt unter **Actions** im Repo.
 
@@ -603,7 +603,7 @@ Falls Pages noch nicht aktiv ist:
 
 Danach erreichbar unter:
 
-**https://dtrywets.github.io/esp8266-d1-soil/**
+**https://thelad-dev.github.io/esp8266-d1-soil/**
 
 Die `.bin`-Dateien werden nicht ins Git committed, sondern nur in der Action gebaut und auf Pages deployed.
 
@@ -705,14 +705,14 @@ Der Workflow **„GitHub Pages (Web Flash)“** liegt schon im Repo (`.github/wo
 
 Unter **Actions** siehst du den Lauf — nicht unter der Template-Liste. Der erste Lauf war wegen eines ESP8266-Buildfehlers in CI fehlgeschlagen; das ist mit Commit `2fc7207` behoben und gepusht. Der Workflow sollte jetzt erneut laufen.
 
-Wenn er grün ist, ist die Seite unter **https://dtrywets.github.io/esp8266-d1-soil/** erreichbar.
+Wenn er grün ist, ist die Seite unter **https://thelad-dev.github.io/esp8266-d1-soil/** erreichbar.
 
 ---
 
 **User**
 
 Triggered via push 1 minute ago
-@dtrywetsdtrywets
+@thelad-devthelad-dev
 pushed
  2fc7207
 main
@@ -739,7 +739,7 @@ Erweitert Projekt um Web-Flash-Portal, ESP32-C3 und GitHub Pages. #1
 All jobs
 Run details
 Triggered via push 5 minutes ago
-@dtrywetsdtrywets
+@thelad-devthelad-dev
 pushed
  d77281d
 main
@@ -783,7 +783,7 @@ Der Workflow **„GitHub Pages (Web Flash)“** ist **grün** (build + deploy er
 
 Die Seite ist live:
 
-**https://dtrywets.github.io/esp8266-d1-soil/**
+**https://thelad-dev.github.io/esp8266-d1-soil/**
 
 Dort kannst du direkt flashen und WLAN einrichten (Chrome/Edge, USB-Kabel).
 
@@ -811,7 +811,7 @@ Verdrahtung und Stromverbrauch klären — dafür lese ich die Hardware-Konfigur
 Verdrahtung und Solar-/Akku-Hinweise ergänze ich auf der Webflash-Seite.
 
 
-Die Webflash-Seite ist ergänzt — nach dem nächsten Push auf `main` ist es auf [dtrywets.github.io/esp8266-d1-soil](https://dtrywets.github.io/esp8266-d1-soil/) live.
+Die Webflash-Seite ist ergänzt — nach dem nächsten Push auf `main` ist es auf [thelad-dev.github.io/esp8266-d1-soil](https://thelad-dev.github.io/esp8266-d1-soil/) live.
 
 ## Verdrahtung
 
@@ -1038,7 +1038,7 @@ Commit `fd19500` ist gepusht — GitHub Actions baut neue Firmware (~2–3 Min.)
 
 ## Zum Testen
 
-1. Seite neu laden: [dtrywets.github.io/esp8266-d1-soil](https://dtrywets.github.io/esp8266-d1-soil/)
+1. Seite neu laden: [thelad-dev.github.io/esp8266-d1-soil](https://thelad-dev.github.io/esp8266-d1-soil/)
 2. **USB verbinden & flashen** (wichtig: **neue** Firmware flashen, nicht nur Seite neu laden)
 3. Nach „Installation complete“ sollte **im selben Dialog** die WLAN-Auswahl erscheinen
 4. Netzwerk wählen → Passwort → Gerät startet neu → Dashboard
@@ -1207,7 +1207,7 @@ Zwei getrennte Buttons:
 
 ## So testen
 
-1. `https://dtrywets.github.io/esp8266-d1-soil/` — **Strg+F5**
+1. `https://thelad-dev.github.io/esp8266-d1-soil/` — **Strg+F5**
 2. **Firmware flashen** (mit Löschen, wenn noch nicht die neueste drauf ist)
 3. Warten bis „Installation complete“
 4. **WLAN einrichten** klicken → USB-Port wählen (gleiches Gerät)

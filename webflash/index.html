@@ -54,14 +54,14 @@
   <header>
     <h1>Bodenfeuchte — Web Flash</h1>
     <p>Firmware per USB flashen · ESP8266 D1 Mini oder ESP32-C3 (Auto-Erkennung) ·
-      <a href="https://github.com/dtrywets/esp8266-d1-soil">GitHub</a></p>
+      <a href="https://github.com/thelad-dev/esp8266-d1-soil">GitHub</a></p>
   </header>
   <main>
     <div class="card">
       <h2>Einrichten</h2>
       <p style="margin:0;color:var(--muted);font-size:.875rem">
         Zwei Schritte: zuerst <strong>Firmware flashen</strong> (einmalig oder Update),
-        danach <strong>WLAN einrichten</strong> — eigener Dialog mit 20&nbsp;s Erkennungszeit
+        danach <strong>WLAN einrichten</strong> — eigener Dialog mit 30&nbsp;s Erkennungszeit
         (zuverlässiger als der eingebaute ESP-Web-Tools-Dialog).
       </p>
       <div class="chips">
@@ -77,7 +77,8 @@
       </div>
       <div class="msg ok" style="margin-top:.85rem">
         <strong>Reihenfolge:</strong> Flashen (beim ESP32-C3 beim ersten Mal unbedingt
-        <strong>„Flash löschen“</strong> aktivieren) → danach „WLAN einrichten“.
+        <strong>„Flash löschen“</strong> aktivieren) → Seite neu laden (F5) → „WLAN einrichten“.
+        Seriellmonitor (PlatformIO/Arduino) vorher schließen.
         Altes WLAN zurücksetzen: im Flash-Dialog „Benutzerdaten löschen“.
       </div>
       <div class="msg warn" style="margin-top:.65rem">
@@ -249,7 +250,7 @@ AOUT ─────────────────────────
       <h2>Hosting</h2>
       <p style="margin:0;color:var(--muted);font-size:.875rem">
         Diese Seite wird aus dem GitHub-Repository per <strong>GitHub Pages</strong> veröffentlicht
-        (<a href="https://dtrywets.github.io/esp8266-d1-soil/">dtrywets.github.io/esp8266-d1-soil</a>).
+        (<a href="https://thelad-dev.github.io/esp8266-d1-soil/">thelad-dev.github.io/esp8266-d1-soil</a>).
         Bei jedem Push auf <code>main</code> baut die Action die Firmware und aktualisiert die
         <code>.bin</code>-Dateien automatisch.
       </p>
