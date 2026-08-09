@@ -6,7 +6,7 @@ Firmware für **Wemos D1 Mini (ESP8266)** oder **ESP32-C3** mit **Capacitive Soi
 
 Im Ordner `webflash/` liegt ein Portal auf Basis von [ESP Web Tools](https://esphome.github.io/esp-web-tools/) — Chip-Erkennung **ESP8266** oder **ESP32-C3**, passende Firmware automatisch. **WLAN** lässt sich direkt im Browser einrichten ([Improv Wi-Fi](https://www.improv-wifi.com/serial/)): nach dem Flash oder separat über „WLAN einrichten“.
 
-**Online (GitHub Pages):** [dtrywets.github.io/esp8266-d1-soil](https://dtrywets.github.io/esp8266-d1-soil/) — wird bei jedem Push auf `main` per GitHub Actions gebaut und veröffentlicht (Firmware-Bins inklusive).
+**Online (GitHub Pages):** [thelad-dev.github.io/esp8266-d1-soil](https://thelad-dev.github.io/esp8266-d1-soil/) — wird bei jedem Push auf `main` per GitHub Actions gebaut und veröffentlicht (Firmware-Bins inklusive).
 
 **Lokal:**
 
